@@ -1,0 +1,90 @@
+# Instructions
+
+During your interaction with the user, if you find anything reusable in this project (e.g., version of a library, model name), especially about a fix to a mistake you made or a correction you received, you should take note in the `Lessons` section in the `.cursorrules` file so you will not make the same mistake again.
+
+You should also use the `.cursorrules` file as a Scratchpad to organize your thoughts. Especially when you receive a new task, you should first review the content of the Scratchpad, clear old different tasks if necessary, first explain the task, and plan the steps you need to take to complete the task. You can use **TODO markers** to indicate progress, e.g.:
+
+[X] Task 1  
+[ ] Task 2  
+
+Also update the progress of the task in the Scratchpad when you finish a subtask.  
+Especially when you finish a milestone, it will help improve the depth of task accomplishment to use the Scratchpad to reflect and plan.  
+The goal is to help you maintain a **big picture** as well as the **progress** of the task.  
+Always refer to the Scratchpad when you plan the next step.
+
+---
+
+# Tools
+
+## **API & Backend**
+- **Node.js + Express** for the backend API.
+- **MongoDB** for storing templates and user data.
+- **Mongoose** for data modeling.
+- **AWS S3** for storing images, templates, and icons.
+- **Sharp** for image processing and resizing.
+- **JWT (JSON Web Tokens)** for authentication.
+- **Swagger** for API documentation.
+
+## **AI Features**
+- **DeepSeek API** for AI-powered text suggestions.
+- **Stable Diffusion/DALL·E** (future feature) for AI-generated thumbnails.
+- **TensorFlow.js** for potential on-device AI enhancements.
+
+## **Storage & Deployment**
+- **Firebase or S3** for storing templates and assets.
+- **Docker** for containerized backend services.
+- **CI/CD** with GitHub Actions.
+
+---
+
+# Lessons
+
+## **User-Specified Lessons**
+- Always **use environment variables** (`.env`) for API keys and database credentials.
+- Use **Multer** for handling file uploads in Node.js.
+- Store **pre-designed templates** as JSON structures in MongoDB.
+- **Cache frequently accessed templates** using **Redis**.
+- If using **Cloudinary**, store image metadata in MongoDB for faster retrieval.
+- Implement **rate limiting** (e.g., using `express-rate-limit`) for API security.
+- For **authentication**, use **JWT** instead of session-based authentication.
+- Use **Swagger (`swagger-jsdoc` and `swagger-ui-express`)** for API documentation.
+
+## **Cursor Learned**
+- **Use async/await** properly in API routes to avoid promise chaining issues.
+- Always validate incoming **template JSON structures** before saving them to the database.
+- Use **Mongoose middleware (`pre` and `post` hooks)** for logging and data validation.
+- **Optimize MongoDB queries** with proper indexing (`.explain("executionStats")`).
+- For large datasets, use **pagination** with `skip()` and `limit()`.
+
+---
+
+# **Scratchpad**
+
+## **Current Task: Backend Development for AI-based YouTube Thumbnail Maker**
+
+### **Milestones**
+[X] Set up **Node.js + Express** backend  
+[X] Connect to **MongoDB** using Mongoose  
+[X] Implement **JWT authentication**  
+[ ] Develop **template storage and retrieval APIs**  
+[ ] Implement **file upload handling** (Cloudinary/S3)  
+[ ] Create **thumbnail generation endpoint**  
+[ ] Integrate **DeepSeek AI** for text suggestions  
+[ ] Add **Swagger documentation** for all APIs  
+[ ] Implement **payment handling (Razorpay)**  
+[ ] Deploy backend on **AWS/GCP**  
+
+---
+
+## **Next Steps**
+- Finish the **Template API** (CRUD operations).
+- Implement **AI-powered thumbnail text suggestions** using **DeepSeek API**.
+- Develop **thumbnail customization API** (text styles, colors, layers).
+- Optimize **image uploads and processing** for performance.
+- Ensure **API security** and add logging.
+
+---
+
+This `.cursorrules` file will help you manage the **backend** for your **AI-powered YouTube Thumbnail Creator** with **DeepSeek AI** and **Swagger documentation**.  
+
+Would you like me to generate a **Node.js API boilerplate with DeepSeek integration**? 🚀
