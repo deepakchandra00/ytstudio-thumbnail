@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, Image, StyleSheet, Animated } from 'react-native';
+import { View, StyleSheet, Animated } from 'react-native';
 import { Text } from 'react-native-paper';
 import { useAuth } from '../store';
 
@@ -27,7 +27,7 @@ const SplashScreen = ({ navigation }) => {
     };
 
     initialize();
-  }, []);
+  }, [navigation]);
 
   return (
     <View style={styles.container}>

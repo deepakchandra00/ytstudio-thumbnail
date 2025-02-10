@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import getEnvVars from '../config/constants';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { configureStore, createSlice } from '@reduxjs/toolkit';
 
 const { apiUrl, authApiUrl } = getEnvVars();
 
@@ -227,17 +228,78 @@ export const useTemplateStore = create((set) => ({
 export const useEditorStore = create((set) => ({
   elements: [],
   selectedElement: null,
+  history: {
+    past: [],
+    present: [],
+    future: []
+  },
   
   setElements: (elements) => set({ elements }),
   setSelectedElement: (selectedElement) => set({ selectedElement }),
   
   addElement: (element) => 
-    set((state) => ({ elements: [...state.elements, element] })),
+    set((state) => {
+      const newState = {
+        elements: [...state.elements, element],
+        history: {
+          past: [...state.history.past, state.elements],
+          present: [...state.elements, element],
+          future: []
+        }
+      };
+      return newState;
+    }),
     
   updateElement: (index, updates) =>
-    set((state) => ({
-      elements: state.elements.map((el, i) =>
+    set((state) => {
+      const updatedElements = state.elements.map((el, i) =>
         i === index ? { ...el, ...updates } : el
-      ),
-    })),
-})); 
+      );
+      return {
+        elements: updatedElements,
+        history: {
+          past: [...state.history.past, state.elements],
+          present: updatedElements,
+          future: []
+        }
+      };
+    }),
+
+  undo: () => set((state) => {
+    if (state.history.past.length === 0) return state;
+    
+    const previous = state.history.past[state.history.past.length - 1];
+    const newPast = state.history.past.slice(0, -1);
+    
+    return {
+      elements: previous,
+      history: {
+        past: newPast,
+        present: previous,
+        future: [state.elements, ...state.history.future]
+      }
+    };
+  }),
+
+  redo: () => set((state) => {
+    if (state.history.future.length === 0) return state;
+    
+    const next = state.history.future[0];
+    const newFuture = state.history.future.slice(1);
+    
+    return {
+      elements: next,
+      history: {
+        past: [...state.history.past, state.elements],
+        present: next,
+        future: newFuture
+      }
+    };
+  })
+}));
+
+// Remove or comment out the Redux-related code since we're using Zustand
+// const editorSlice = createSlice({...})
+// const store = configureStore({...})
+
+export default useEditorStore; 
