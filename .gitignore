@@ -7,6 +7,7 @@ yarn-error.log
 build/
 dist/
 out/
+.next/
 
 # Environment files
 .env
@@ -49,3 +50,19 @@ thumbnail-maker-frontend/*.log
 # Dependency lock files
 package-lock.json
 yarn.lock
+
+# Miscellaneous
+.pnp
+.pnp.js
+.cache/
+
+# Testing
+coverage/
+.nyc_output/
+
+# Vercel
+.vercel
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
