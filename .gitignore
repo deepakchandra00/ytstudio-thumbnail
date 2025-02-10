@@ -1,0 +1,51 @@
+# Dependency directories
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Production build directories
+build/
+dist/
+out/
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE and Editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Logs
+logs/
+*.log
+
+# Backend specific ignores
+thumbnail-maker/node_modules/
+thumbnail-maker/build/
+thumbnail-maker/.env
+thumbnail-maker/*.log
+
+# Frontend specific ignores
+thumbnail-maker-frontend/node_modules/
+thumbnail-maker-frontend/build/
+thumbnail-maker-frontend/.next/
+thumbnail-maker-frontend/.env
+thumbnail-maker-frontend/*.log
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*~
+.tmp/
+
+# Dependency lock files
+package-lock.json
+yarn.lock
