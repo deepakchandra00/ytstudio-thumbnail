@@ -1,0 +1,52 @@
+# Instructions
+
+During your interaction with the user, if you find anything reusable in this project (e.g., version of a library, API endpoints), take note in the `Lessons` section.
+
+Use this file as a **Scratchpad** to organize thoughts, track progress, and reflect on tasks. When receiving a new task, first **review and clear outdated tasks** before planning the next steps.
+
+Mark progress using:
+[X] Task 1 (Completed)
+[ ] Task 2 (Pending)
+
+# Tech Stack
+
+- **Framework:** React Native (Expo or CLI)
+- **UI Library:** Tailwind CSS, React Native Paper
+- **State Management:** Zustand or Redux Toolkit
+- **Image Processing:** `react-native-photo-editor`
+- **Backend:** Custom API at `http://localhost:5000/api`
+- **File Handling:** React Native FS, Expo FileSystem
+- **Payments:** Razorpay (for subscriptions)
+
+# Features
+
+✅ Drag, resize, rotate images & elements  
+✅ Text editing (fonts, colors, alignment)  
+✅ Background removal (AI-based)  
+✅ Layer-based editing (like Photoshop)  
+✅ Upload and manage images  
+
+## Template Library
+✅ Pre-built design templates  
+✅ Categorized templates (YouTube, Instagram, Business, etc.)  
+✅ Users can create & save their own templates  
+
+
+# Lessons
+
+## User-Specified Lessons
+
+- Store pre-designed templates as **JSON** in Firebase or MongoDB.
+- Templates should support **multiple images, text, logos, and icons** with **position, size, opacity, and style**.
+- Implement **category-based filtering** for templates.
+- Optimize **exporting thumbnails as PNG/JPG**.
+- Use `react-native-photo-editor` for **image editing**.
+- Backend API requests should follow `http://localhost:5000/api`.
+
+## Cursor Learned
+
+- Prefer **fetch() over axios** for API calls.
+- Ensure **templates load asynchronously** to prevent UI blocking.
+- Support **both predefined & user-defined categories**.
+- Optimize image uploads using **Cloudinary or Firebase Storage**.
+
