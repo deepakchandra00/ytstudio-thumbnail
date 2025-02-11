@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useRef, useMemo } from 'react';
-import { View, StyleSheet, Dimensions, Platform, TouchableWithoutFeedback } from 'react-native';
+import { View, StyleSheet, Dimensions, Platform, TouchableWithoutFeedback, Alert } from 'react-native';
 import { IconButton, Surface, Portal, Modal, TextInput, Button, Menu } from 'react-native-paper';
-import * as ImagePicker from 'expo-image-picker';
+import * as ImagePicker from 'expo-image-picker/src/ImagePicker';
 import {
   Canvas,
   Image,
@@ -92,26 +92,55 @@ const EditorScreen = () => {
 
   const pickImage = useCallback(async () => {
     try {
+      // Request media library permissions
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert(
+          'Permission Required', 
+          'Sorry, we need camera roll permissions to upload images.'
+        );
+        return;
+      }
+
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaType.Images,
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
         aspect: [16, 9],
         quality: 1,
+        base64: false,
+        // Add file size limit (e.g., 10MB)
+        maxFileSize: 10 * 1024 * 1024, 
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
-        const imageUri = result.assets[0].uri;
+        const imageAsset = result.assets[0];
+        
+        // Validate image dimensions
+        if (imageAsset.width > 4096 || imageAsset.height > 4096) {
+          Alert.alert(
+            'Image Too Large', 
+            'Image is too large. Maximum dimensions are 4096x4096 pixels.'
+          );
+          return;
+        }
+
         addElement({
           type: 'image',
-          uri: imageUri,
+          uri: imageAsset.uri,
           position: { x: 0, y: 0 },
-          width: CANVAS_WIDTH / 3,
-          height: (CANVAS_WIDTH / 3) * (9/16),
+          width: Math.min(CANVAS_WIDTH / 3, imageAsset.width),
+          height: Math.min((CANVAS_WIDTH / 3) * (9/16), imageAsset.height),
           zIndex: elements.length,
+          originalWidth: imageAsset.width,
+          originalHeight: imageAsset.height,
         });
       }
     } catch (error) {
       console.error('Error picking image:', error);
+      Alert.alert(
+        'Error', 
+        'Failed to upload image. Please try again.'
+      );
     }
   }, [addElement, elements.length]);
 
@@ -135,18 +164,68 @@ const EditorScreen = () => {
 
   const pickBackgroundImage = useCallback(async () => {
     try {
+      // Request media library permissions
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert(
+          'Permission Required', 
+          'Sorry, we need camera roll permissions to set a background image.'
+        );
+        return;
+      }
+
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaType.Images,
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
         aspect: [16, 9],
         quality: 1,
+        base64: false,
+        // Add file size limit (e.g., 15MB)
+        maxFileSize: 15 * 1024 * 1024, 
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
-        setBackgroundImage(result.assets[0].uri);
+        const imageAsset = result.assets[0];
+        
+        // Validate image dimensions
+        if (imageAsset.width > 4096 || imageAsset.height > 4096) {
+          Alert.alert(
+            'Image Too Large', 
+            'Background image is too large. Maximum dimensions are 4096x4096 pixels.'
+          );
+          return;
+        }
+
+        // Use Alert for confirmation
+        Alert.alert(
+          'Set Background',
+          'Do you want to set this image as the background?',
+          [
+            {
+              text: 'Cancel',
+              style: 'cancel'
+            },
+            {
+              text: 'Set Background',
+              onPress: () => {
+                setBackgroundImage({
+                  uri: imageAsset.uri,
+                  width: imageAsset.width,
+                  height: imageAsset.height,
+                  originalWidth: imageAsset.width,
+                  originalHeight: imageAsset.height
+                });
+              }
+            }
+          ]
+        );
       }
     } catch (error) {
       console.error('Error picking background image:', error);
+      Alert.alert(
+        'Error', 
+        'Failed to set background image. Please try again.'
+      );
     }
   }, []);
 
@@ -196,14 +275,22 @@ const EditorScreen = () => {
             <Canvas style={styles.canvas}>
               <Fill color="white" />
               {backgroundImage && (
-                <Image
-                  image={useImage(backgroundImage)}
-                  x={0}
-                  y={0}
-                  width={CANVAS_WIDTH}
-                  height={CANVAS_HEIGHT}
-                  fit="cover"
-                />
+                <Canvas 
+                  style={{ 
+                    position: 'absolute', 
+                    width: CANVAS_WIDTH, 
+                    height: CANVAS_HEIGHT 
+                  }}
+                >
+                  <Image
+                    image={useImage(backgroundImage.uri)}
+                    x={0}
+                    y={0}
+                    width={CANVAS_WIDTH}
+                    height={CANVAS_HEIGHT}
+                    fit="cover"
+                  />
+                </Canvas>
               )}
             </Canvas>
 
@@ -223,7 +310,29 @@ const EditorScreen = () => {
                   />
                 );
               } else if (element.type === 'image') {
-                return <ImageElement key={index} element={element} />;
+                return (
+                  <ImageElement
+                    key={`image-${index}`}
+                    element={element}
+                    isSelected={selectedElementId === index}
+                    onSelect={() => handleElementSelect(index)}
+                    onDrag={(newPosition) => {
+                      updateElement(index, {
+                        ...element,
+                        position: newPosition
+                      });
+                    }}
+                    onResize={(newDimensions) => {
+                      updateElement(index, {
+                        ...element,
+                        width: newDimensions.width,
+                        height: newDimensions.height
+                      });
+                    }}
+                    isDragging={isDragging}
+                    setIsDragging={setIsDragging}
+                  />
+                );
               }
               return null;
             })}
