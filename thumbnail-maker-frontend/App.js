@@ -13,38 +13,35 @@ import EditorScreen from './src/screens/EditorScreen';
 
 const Stack = createNativeStackNavigator();
 
-function App() {
+const AppNavigator = () => {
+  return (
+    <PaperProvider>
+      <NavigationContainer>
+        <Stack.Navigator 
+          initialRouteName="Splash"
+          screenOptions={{
+            gestureEnabled: true,
+            fullScreenGestureEnabled: true,
+            headerShown: false
+          }}
+        >
+          <Stack.Screen name="Splash" component={SplashScreen} />
+          <Stack.Screen name="Auth" component={AuthScreen} />
+          <Stack.Screen name="Home" component={HomeScreen} />
+          <Stack.Screen name="Editor" component={EditorScreen} />
+        </Stack.Navigator>
+      </NavigationContainer>
+    </PaperProvider>
+  );
+};
+
+const App = () => {
   return (
     <GestureHandlerRootView style={styles.root}>
-      <PaperProvider>
-        <NavigationContainer>
-          <Stack.Navigator initialRouteName="Splash">
-            <Stack.Screen 
-              name="Splash" 
-              component={SplashScreen} 
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen 
-              name="Auth" 
-              component={AuthScreen} 
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen 
-              name="Home" 
-              component={HomeScreen} 
-              options={{ headerShown: false }}
-            />
-            <Stack.Screen 
-              name="Editor" 
-              component={EditorScreen}
-              options={{ headerShown: false }}
-            />
-          </Stack.Navigator>
-        </NavigationContainer>
-      </PaperProvider>
+      <AppNavigator />
     </GestureHandlerRootView>
   );
-}
+};
 
 const styles = StyleSheet.create({
   root: {

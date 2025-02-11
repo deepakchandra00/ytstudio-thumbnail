@@ -150,17 +150,18 @@ const EditorScreen = () => {
     }
   }, []);
 
-  const handleElementSelect = useCallback((elementId) => {
-    setSelectedElementId(elementId);
+  const handleElementDrag = useCallback((index, newPosition) => {
+    console.log('Handling drag:', { index, newPosition });
+    updateElement(index, {
+      ...elements[index],
+      position: newPosition
+    });
+  }, [elements, updateElement]);
+
+  const handleElementSelect = useCallback((index) => {
+    console.log('Selecting element:', index);
+    setSelectedElementId(index);
   }, []);
-
-  const handleElementDrag = useCallback((elementId, newPosition) => {
-    updateElement(elementId, { position: newPosition });
-  }, [updateElement]);
-
-  const handleElementRotate = useCallback((elementId, newRotation) => {
-    updateElement(elementId, { rotation: newRotation });
-  }, [updateElement]);
 
   return (
     <View style={styles.container}>
@@ -173,19 +174,21 @@ const EditorScreen = () => {
         setHeaderMenuVisible={setHeaderMenuVisible}
       />
       <View style={styles.canvasContainer}>
-        <Canvas style={styles.canvas}>
-          <Fill color="white" />
-          {backgroundImage && (
-            <Image
-              image={useImage(backgroundImage)}
-              x={0}
-              y={0}
-              width={CANVAS_WIDTH}
-              height={CANVAS_HEIGHT}
-              fit="cover"
-            />
-          )}
-          
+        <View style={styles.canvasWrapper}>
+          <Canvas style={styles.canvas}>
+            <Fill color="white" />
+            {backgroundImage && (
+              <Image
+                image={useImage(backgroundImage)}
+                x={0}
+                y={0}
+                width={CANVAS_WIDTH}
+                height={CANVAS_HEIGHT}
+                fit="cover"
+              />
+            )}
+          </Canvas>
+
           {elements.map((element, index) => {
             if (element.type === 'text') {
               return (
@@ -195,17 +198,16 @@ const EditorScreen = () => {
                   isSelected={selectedElementId === index}
                   onSelect={() => handleElementSelect(index)}
                   onDrag={(newPosition) => handleElementDrag(index, newPosition)}
-                  onRotate={(newRotation) => handleElementRotate(index, newRotation)}
                   isDragging={isDragging}
                   setIsDragging={setIsDragging}
                 />
               );
             } else if (element.type === 'image') {
-              return <ImageElement key={index} element={element} animatedStyle={animatedStyle} />;
+              return <ImageElement key={index} element={element} />;
             }
             return null;
           })}
-        </Canvas>
+        </View>
       </View>
 
       <EditorToolbar
@@ -248,10 +250,18 @@ const styles = StyleSheet.create({
   },
   canvasContainer: {
     flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  canvasWrapper: {
+    width: CANVAS_WIDTH,
+    height: CANVAS_HEIGHT,
     position: 'relative',
   },
   canvas: {
-    flex: 1,
+    width: CANVAS_WIDTH,
+    height: CANVAS_HEIGHT,
+    position: 'absolute',
   },
   toolbar: {
     flexDirection: 'row',

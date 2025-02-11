@@ -1,75 +1,74 @@
 import React from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Dimensions } from 'react-native';
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
-  withSpring,
-  runOnJS
 } from 'react-native-reanimated';
 
-export const GestureHandler = ({ 
-  children, 
-  position, 
-  size,
-  onDragStart,
-  onDragEnd,
-}) => {
-  const offset = useSharedValue({ x: position.x, y: position.y });
-  const start = useSharedValue({ x: 0, y: 0 });
-  const scale = useSharedValue(1);
-  const rotation = useSharedValue(0);
+const { width, height } = Dimensions.get('screen');
 
-  const dragGesture = Gesture.Pan()
-    .enabled(true)
-    .minDistance(0)
+function clamp(val, min, max) {
+  return Math.min(Math.max(val, min), max);
+}
+
+export const GestureHandler = ({ children, position, size, onDragStart, onDragEnd }) => {
+  const translateX = useSharedValue(position.x);
+  const translateY = useSharedValue(position.y);
+  const prevTranslateX = useSharedValue(position.x);
+  const prevTranslateY = useSharedValue(position.y);
+
+  const gesture = Gesture.Pan()
+    .minDistance(1)
     .onStart(() => {
-      start.value = {
-        x: offset.value.x,
-        y: offset.value.y,
-      };
-      runOnJS(onDragStart)?.();
+      prevTranslateX.value = translateX.value;
+      prevTranslateY.value = translateY.value;
+      onDragStart?.();
     })
     .onUpdate((event) => {
-      offset.value = {
-        x: start.value.x + event.translationX,
-        y: start.value.y + event.translationY,
-      };
+      const maxTranslateX = width - size.width;
+      const maxTranslateY = height - size.height;
+
+      translateX.value = clamp(
+        prevTranslateX.value + event.translationX,
+        0,
+        maxTranslateX
+      );
+      translateY.value = clamp(
+        prevTranslateY.value + event.translationY,
+        0,
+        maxTranslateY
+      );
     })
     .onEnd(() => {
-      runOnJS(onDragEnd)?.({
-        x: offset.value.x,
-        y: offset.value.y,
+      onDragEnd?.({
+        x: translateX.value,
+        y: translateY.value,
       });
-    });
+    })
+    .runOnJS(true);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [
-      { translateX: offset.value.x },
-      { translateY: offset.value.y },
-      { scale: scale.value },
-      { rotate: `${rotation.value}rad` },
+      { translateX: translateX.value },
+      { translateY: translateY.value },
     ],
-    position: 'absolute',
-    left: 0,
-    top: 0,
     width: size.width,
     height: size.height,
+    position: 'absolute',
   }));
 
   return (
-    <Animated.View style={[styles.container, animatedStyle]}>
-      <GestureDetector gesture={dragGesture}>
+    <GestureDetector gesture={gesture}>
+      <Animated.View style={[styles.container, animatedStyle]}>
         {children}
-      </GestureDetector>
-    </Animated.View>
+      </Animated.View>
+    </GestureDetector>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     position: 'absolute',
-    left: 0,
-    top: 0,
   },
 }); 

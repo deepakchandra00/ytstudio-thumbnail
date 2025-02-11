@@ -1,94 +1,117 @@
-import React from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
-import { Group, Text, matchFont, Circle, Rect } from "@shopify/react-native-skia";
-import { GestureHandler } from './GestureHandler';
+import React, { useCallback } from 'react';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import Animated, { 
+  useSharedValue, 
+  useAnimatedStyle,
+  runOnJS
+} from 'react-native-reanimated';
+import { Text, matchFont, Canvas } from "@shopify/react-native-skia";
+import { View, Platform } from 'react-native';
 
-const TextElement = ({
-  element,
-  isSelected,
-  onSelect,
-  onDrag,
-  onRotate,
+const TextElement = ({ 
+  element, 
+  isSelected, 
+  onSelect, 
+  onDrag, 
   isDragging,
-  setIsDragging
+  setIsDragging 
 }) => {
+  console.log('TextElement props:', { element, isSelected, isDragging });
+  
+  const position = useSharedValue({
+    x: element.position.x,
+    y: element.position.y
+  });
+
+  // Use matchFont with system fonts
+  const fontFamily = Platform.select({ 
+    ios: "Helvetica", 
+    default: "sans-serif" 
+  });
+
   const fontStyle = {
-    fontFamily: Platform.select({ ios: "Helvetica", default: "sans-serif" }),
-    fontSize: element.size || 20,
+    fontFamily,
+    fontSize: element.size,
     fontWeight: "normal"
   };
-  
-  const font = matchFont(fontStyle);
 
-  if (!font || !element.content) {
+  const font = matchFont(fontStyle);
+  console.log('Font loading attempt:', {
+    fontFamily,
+    size: element.size,
+    loaded: !!font
+  });
+
+  // Skip rendering if font is not loaded
+  if (!font) {
+    console.log('Font not loaded');
     return null;
   }
 
-  const size = {
-    width: element.width || 300,
-    height: element.height || 100,
-  };
+  const handleDragEnd = useCallback((x, y) => {
+    if (onDrag) {
+      onDrag({ x, y });
+    }
+  }, [onDrag]);
+
+  const gesture = Gesture.Pan()
+    .minDistance(1)
+    .onBegin(() => {
+      console.log('Gesture begin');
+      if (onSelect) runOnJS(onSelect)();
+      if (setIsDragging) runOnJS(setIsDragging)(true);
+    })
+    .onStart(() => {
+      console.log('Gesture started');
+    })
+    .onUpdate((event) => {
+      console.log('Gesture update:', event.translationX, event.translationY);
+      position.value = {
+        x: element.position.x + event.translationX,
+        y: element.position.y + event.translationY
+      };
+    })
+    .onEnd(() => {
+      console.log('Gesture ended');
+      if (setIsDragging) runOnJS(setIsDragging)(false);
+      runOnJS(handleDragEnd)(position.value.x, position.value.y);
+    })
+    .onFinalize(() => {
+      console.log('Gesture finalized');
+      if (setIsDragging) runOnJS(setIsDragging)(false);
+    })
+    .shouldCancelWhenOutside(true);
+
+  // Use worklet-compatible animated style
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      position: 'absolute',
+      transform: [
+        { translateX: position.value.x },
+        { translateY: position.value.y }
+      ],
+      width: element.size * element.content.length,
+      height: element.size * 1.2,
+    };
+  });
+
+  console.log('Rendering TextElement with font:', fontFamily);
 
   return (
-    <View style={{ position: 'absolute', left: 0, top: 0 }}>
-      <GestureHandler
-        position={element.position}
-        size={size}
-        onDragStart={() => {
-          setIsDragging(true);
-          onSelect();
-        }}
-        onDragEnd={(newPosition) => {
-          setIsDragging(false);
-          onDrag(newPosition);
-        }}
-      >
-        <Group>
+    <GestureDetector gesture={gesture}>
+      <Animated.View style={animatedStyle}>
+        <Canvas style={{ flex: 1 }}>
           <Text
-            x={0}
-            y={fontStyle.fontSize}
-            text={element.content}
             font={font}
+            text={element.content}
+            x={0}
+            y={element.size}
             color={element.color || "black"}
           />
-          
-          {isSelected && (
-            <>
-              <Group
-                style="stroke"
-                color="#007AFF"
-                strokeWidth={1}
-                strokeDash={[5, 5]}
-              >
-                <Rect 
-                  x={-5} 
-                  y={-fontStyle.fontSize} 
-                  width={size.width + 10} 
-                  height={size.height + 10} 
-                />
-              </Group>
-              
-              <Circle 
-                cx={size.width + 20} 
-                cy={size.height / 2} 
-                r={10} 
-                color="#007AFF" 
-              />
-            </>
-          )}
-        </Group>
-      </GestureHandler>
-    </View>
+        </Canvas>
+      </Animated.View>
+    </GestureDetector>
   );
 };
-
-const styles = StyleSheet.create({
-  gestureRoot: {
-    flex: 1,
-    position: 'absolute',
-    width: '100%',
-    height: '100%',
-  },
-});
 
 export default TextElement; 

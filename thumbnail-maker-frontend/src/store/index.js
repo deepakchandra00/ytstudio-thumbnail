@@ -225,8 +225,9 @@ export const useTemplateStore = create((set) => ({
 }));
 
 // Editor Store
-export const useEditorStore = create((set) => ({
-  elements: [],
+export const useEditorStore = create((set, get) => ({
+  elements: [
+  ],
   selectedElement: null,
   history: {
     past: [],
