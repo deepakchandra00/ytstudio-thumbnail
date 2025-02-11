@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useMemo } from 'react';
+import React, { useState, useCallback, useRef, useMemo, useEffect } from 'react';
 import { View, StyleSheet, Dimensions, Platform, TouchableWithoutFeedback, Alert } from 'react-native';
 import { IconButton, Surface, Portal, Modal, TextInput, Button, Menu } from 'react-native-paper';
 import * as ImagePicker from 'expo-image-picker/src/ImagePicker';
@@ -52,12 +52,46 @@ const TEXT_ALIGNMENTS = [
   { name: 'Right', value: 'right', icon: 'format-align-right' },
 ];
 
+// Dummy base64 encoded background image (a simple white 1x1 pixel PNG)
+const DUMMY_BACKGROUND_IMAGE = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg==';
+
+// Default Template Object
+const DEFAULT_TEMPLATE = {
+  id: 'default_template',
+  name: 'Blank Canvas',
+  elements: [
+    {
+      type: 'text',
+      content: 'Your Title Here',
+      position: { x: 50, y: 50 },
+      font: Platform.select({ ios: 'Helvetica', default: 'sans-serif' }),
+      size: 32,
+      color: COLORS[0].value, // Black
+      fontStyle: 'bold',
+      alignment: 'center',
+      zIndex: 0,
+    },
+    {
+      type: 'text',
+      content: 'Subtitle or Description',
+      position: { x: 50, y: 150 },
+      font: Platform.select({ ios: 'Helvetica', default: 'sans-serif' }),
+      size: 20,
+      color: COLORS[0].value, // Black
+      fontStyle: 'normal',
+      alignment: 'center',
+      zIndex: 1,
+    }
+  ],
+  backgroundImage: DUMMY_BACKGROUND_IMAGE,
+};
+
 const EditorScreen = () => {
   // Refs
   const canvasRef = useRef(null);
 
   // Store
-  const { elements, addElement, updateElement, removeElement, history, undo, redo } = useEditorStore();
+  const { elements, addElement, updateElement, removeElement, history, undo, redo, setElements } = useEditorStore();
 
   // State
   const [textInput, setTextInput] = useState('');
@@ -243,13 +277,10 @@ const EditorScreen = () => {
 
   const handleUpdateTextStyle = (elementId, newStyle) => {
     // Update the specific text element's style
-    setTextElements(prevElements => 
-      prevElements.map(element => 
-        element.id === elementId 
-          ? { ...element, ...newStyle } 
-          : element
-      )
-    );
+    updateElement(elementId, {
+      ...elements[elementId],
+      ...newStyle
+    });
   };
 
   const handleDeselectElement = useCallback(() => {
@@ -258,6 +289,77 @@ const EditorScreen = () => {
       setSelectedElementId(null);
     }
   }, [isDragging]);
+
+  // Function to load default template
+  const loadDefaultTemplate = useCallback(() => {
+    // Clear existing elements
+    setElements([]);
+
+    // Add default template elements
+    DEFAULT_TEMPLATE.elements.forEach(element => {
+      addElement(element);
+    });
+
+    // Set background image if exists
+    if (DEFAULT_TEMPLATE.backgroundImage) {
+      setBackgroundImage(DEFAULT_TEMPLATE.backgroundImage);
+    }
+  }, [addElement, setElements]);
+
+  // Optional: Automatically load default template on first render
+  useEffect(() => {
+    loadDefaultTemplate();
+  }, [loadDefaultTemplate]);
+
+  // Optionally add a method to reset to default template in the toolbar or header
+  const resetToDefaultTemplate = () => {
+    loadDefaultTemplate();
+  };
+
+  // State to store the background image
+  const [backgroundImageObj, setBackgroundImageObj] = useState(null);
+
+  // Effect to handle background image loading
+  useEffect(() => {
+    let isMounted = true;
+    
+    const loadBackgroundImage = async () => {
+      if (!backgroundImage) {
+        setBackgroundImageObj(null);
+        return;
+      }
+
+      try {
+        // Handle base64 string
+        if (typeof backgroundImage === 'string' && backgroundImage.startsWith('data:image')) {
+          const image = useImage(backgroundImage);
+          if (isMounted) {
+            setBackgroundImageObj(image);
+          }
+          return;
+        }
+
+        // Handle image object with uri
+        if (backgroundImage?.uri) {
+          const image = useImage(backgroundImage.uri);
+          if (isMounted) {
+            setBackgroundImageObj(image);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading background image:', error);
+        if (isMounted) {
+          setBackgroundImageObj(null);
+        }
+      }
+    };
+
+    loadBackgroundImage();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [backgroundImage]);
 
   return (
     <TouchableWithoutFeedback onPress={handleDeselectElement}>
@@ -269,28 +371,21 @@ const EditorScreen = () => {
           onRemoveElement={removeElement}
           headerMenuVisible={headerMenuVisible}
           setHeaderMenuVisible={setHeaderMenuVisible}
+          resetToDefaultTemplate={resetToDefaultTemplate}
         />
         <View style={styles.canvasContainer}>
           <View style={styles.canvasWrapper}>
             <Canvas style={styles.canvas}>
               <Fill color="white" />
-              {backgroundImage && (
-                <Canvas 
-                  style={{ 
-                    position: 'absolute', 
-                    width: CANVAS_WIDTH, 
-                    height: CANVAS_HEIGHT 
-                  }}
-                >
-                  <Image
-                    image={useImage(backgroundImage.uri)}
-                    x={0}
-                    y={0}
-                    width={CANVAS_WIDTH}
-                    height={CANVAS_HEIGHT}
-                    fit="cover"
-                  />
-                </Canvas>
+              {backgroundImageObj && (
+                <Image
+                  image={backgroundImageObj}
+                  x={0}
+                  y={0}
+                  width={CANVAS_WIDTH}
+                  height={CANVAS_HEIGHT}
+                  fit="cover"
+                />
               )}
             </Canvas>
 
@@ -346,6 +441,7 @@ const EditorScreen = () => {
           onRedo={redo}
           canUndo={history.past.length > 0}
           canRedo={history.future.length > 0}
+          resetToDefaultTemplate={resetToDefaultTemplate}
         />
 
         <TextModal
