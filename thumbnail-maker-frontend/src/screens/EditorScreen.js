@@ -151,7 +151,6 @@ const EditorScreen = () => {
   }, []);
 
   const handleElementDrag = useCallback((index, newPosition) => {
-    console.log('Handling drag:', { index, newPosition });
     updateElement(index, {
       ...elements[index],
       position: newPosition
@@ -196,8 +195,9 @@ const EditorScreen = () => {
                   key={index}
                   element={element}
                   isSelected={selectedElementId === index}
-                  onSelect={() => handleElementSelect(index)}
+                  onSelect={() => setSelectedElementId(index)}
                   onDrag={(newPosition) => handleElementDrag(index, newPosition)}
+                  onRotate={(newRotation) => handleElementRotate(index, newRotation)}
                   isDragging={isDragging}
                   setIsDragging={setIsDragging}
                 />

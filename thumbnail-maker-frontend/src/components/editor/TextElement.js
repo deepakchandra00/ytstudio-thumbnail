@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { 
   useSharedValue, 
@@ -17,12 +17,23 @@ const TextElement = ({
   setIsDragging 
 }) => {
   console.log('TextElement props:', { element, isSelected, isDragging });
-  
+
+  // Add a shared value for rotation
+  const rotation = useSharedValue(0);
+
   const position = useSharedValue({
     x: element.position.x,
     y: element.position.y
   });
 
+    // Rotation gesture handler
+    const rotationGesture = Gesture.Rotation()
+    .onUpdate((event) => {
+      // Convert radians to degrees
+      rotation.value = event.rotation * (180 / Math.PI);
+    });
+
+    
   // Use matchFont with system fonts
   const fontFamily = Platform.select({ 
     ios: "Helvetica", 
@@ -54,7 +65,8 @@ const TextElement = ({
     }
   }, [onDrag]);
 
-  const gesture = Gesture.Pan()
+  const gesture = Gesture.Simultaneous(
+    Gesture.Pan()
     .minDistance(1)
     .onBegin(() => {
       console.log('Gesture begin');
@@ -80,7 +92,10 @@ const TextElement = ({
       console.log('Gesture finalized');
       if (setIsDragging) runOnJS(setIsDragging)(false);
     })
-    .shouldCancelWhenOutside(true);
+    .shouldCancelWhenOutside(true),
+    rotationGesture
+  )
+
 
   // Use worklet-compatible animated style
   const animatedStyle = useAnimatedStyle(() => {
@@ -88,10 +103,15 @@ const TextElement = ({
       position: 'absolute',
       transform: [
         { translateX: position.value.x },
-        { translateY: position.value.y }
+        { translateY: position.value.y },
+        { rotate: `${rotation.value}deg` }
       ],
       width: element.size * element.content.length,
       height: element.size * 1.2,
+            // Add border when selected
+            borderWidth: isSelected ? 2 : 0,
+            borderColor: isSelected ? 'blue' : 'transparent',
+            padding: isSelected ? 5 : 0
     };
   });
 
@@ -99,7 +119,7 @@ const TextElement = ({
 
   return (
     <GestureDetector gesture={gesture}>
-      <Animated.View style={animatedStyle}>
+      <Animated.View style={[animatedStyle, { position: 'absolute' }]}>
         <Canvas style={{ flex: 1 }}>
           <Text
             font={font}
