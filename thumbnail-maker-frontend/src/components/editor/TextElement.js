@@ -7,6 +7,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Text, matchFont, Canvas } from "@shopify/react-native-skia";
 import { View, Platform } from 'react-native';
+import TextFormatterWidget from './TextFormatterWidget';
 
 const TextElement = ({ 
   element, 
@@ -14,7 +15,8 @@ const TextElement = ({
   onSelect, 
   onDrag, 
   isDragging,
-  setIsDragging 
+  setIsDragging,
+  onUpdateTextStyle 
 }) => {
   console.log('TextElement props:', { element, isSelected, isDragging });
 
@@ -25,6 +27,12 @@ const TextElement = ({
     x: element.position.x,
     y: element.position.y
   });
+
+    // Handle text style update
+    const handleTextStyleUpdate = useCallback((newStyle) => {
+      // Propagate style update to parent component
+      onUpdateTextStyle && onUpdateTextStyle(isSelected, newStyle);
+    }, [isSelected, onUpdateTextStyle]);
 
     // Rotation gesture handler
     const rotationGesture = Gesture.Rotation()
@@ -118,6 +126,7 @@ const TextElement = ({
   console.log('Rendering TextElement with font:', fontFamily);
 
   return (
+    <View>
     <GestureDetector gesture={gesture}>
       <Animated.View style={[animatedStyle, { position: 'absolute' }]}>
         <Canvas style={{ flex: 1 }}>
@@ -131,6 +140,13 @@ const TextElement = ({
         </Canvas>
       </Animated.View>
     </GestureDetector>
+    {isSelected && (
+        <TextFormatterWidget 
+          selectedElement={element}
+          onUpdateTextStyle={handleTextStyleUpdate}
+        />
+      )}
+    </View>
   );
 };
 

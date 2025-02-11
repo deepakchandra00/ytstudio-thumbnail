@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useRef, useMemo } from 'react';
-import { View, StyleSheet, Dimensions, Platform } from 'react-native';
+import { View, StyleSheet, Dimensions, Platform, TouchableWithoutFeedback } from 'react-native';
 import { IconButton, Surface, Portal, Modal, TextInput, Button, Menu } from 'react-native-paper';
 import * as ImagePicker from 'expo-image-picker';
 import {
@@ -162,85 +162,106 @@ const EditorScreen = () => {
     setSelectedElementId(index);
   }, []);
 
+  const handleUpdateTextStyle = (elementId, newStyle) => {
+    // Update the specific text element's style
+    setTextElements(prevElements => 
+      prevElements.map(element => 
+        element.id === elementId 
+          ? { ...element, ...newStyle } 
+          : element
+      )
+    );
+  };
+
+  const handleDeselectElement = useCallback(() => {
+    // Only deselect if not currently dragging
+    if (!isDragging) {
+      setSelectedElementId(null);
+    }
+  }, [isDragging]);
+
   return (
-    <View style={styles.container}>
-      <EditorHeader
-        onBack={() => {/* TODO */}}
-        onPickBackground={pickBackgroundImage}
-        elements={elements}
-        onRemoveElement={removeElement}
-        headerMenuVisible={headerMenuVisible}
-        setHeaderMenuVisible={setHeaderMenuVisible}
-      />
-      <View style={styles.canvasContainer}>
-        <View style={styles.canvasWrapper}>
-          <Canvas style={styles.canvas}>
-            <Fill color="white" />
-            {backgroundImage && (
-              <Image
-                image={useImage(backgroundImage)}
-                x={0}
-                y={0}
-                width={CANVAS_WIDTH}
-                height={CANVAS_HEIGHT}
-                fit="cover"
-              />
-            )}
-          </Canvas>
-
-          {elements.map((element, index) => {
-            if (element.type === 'text') {
-              return (
-                <TextElement
-                  key={index}
-                  element={element}
-                  isSelected={selectedElementId === index}
-                  onSelect={() => setSelectedElementId(index)}
-                  onDrag={(newPosition) => handleElementDrag(index, newPosition)}
-                  onRotate={(newRotation) => handleElementRotate(index, newRotation)}
-                  isDragging={isDragging}
-                  setIsDragging={setIsDragging}
+    <TouchableWithoutFeedback onPress={handleDeselectElement}>
+      <View style={styles.container}>
+        <EditorHeader
+          onBack={() => {/* TODO */}}
+          onPickBackground={pickBackgroundImage}
+          elements={elements}
+          onRemoveElement={removeElement}
+          headerMenuVisible={headerMenuVisible}
+          setHeaderMenuVisible={setHeaderMenuVisible}
+        />
+        <View style={styles.canvasContainer}>
+          <View style={styles.canvasWrapper}>
+            <Canvas style={styles.canvas}>
+              <Fill color="white" />
+              {backgroundImage && (
+                <Image
+                  image={useImage(backgroundImage)}
+                  x={0}
+                  y={0}
+                  width={CANVAS_WIDTH}
+                  height={CANVAS_HEIGHT}
+                  fit="cover"
                 />
-              );
-            } else if (element.type === 'image') {
-              return <ImageElement key={index} element={element} />;
-            }
-            return null;
-          })}
+              )}
+            </Canvas>
+
+            {elements.map((element, index) => {
+              if (element.type === 'text') {
+                return (
+                  <TextElement
+                    key={index}
+                    element={element}
+                    isSelected={selectedElementId === index}
+                    onSelect={() => setSelectedElementId(index)}
+                    onDrag={(newPosition) => handleElementDrag(index, newPosition)}
+                    onRotate={(newRotation) => handleElementRotate(index, newRotation)}
+                    isDragging={isDragging}
+                    setIsDragging={setIsDragging}
+                    onUpdateTextStyle={handleUpdateTextStyle}
+                  />
+                );
+              } else if (element.type === 'image') {
+                return <ImageElement key={index} element={element} />;
+              }
+              return null;
+            })}
+          </View>
         </View>
+
+        <EditorToolbar
+          onAddImage={pickImage}
+          onAddText={() => setTextModalVisible(true)}
+          onUndo={undo}
+          onRedo={redo}
+          canUndo={history.past.length > 0}
+          canRedo={history.future.length > 0}
+        />
+
+        <TextModal
+          visible={textModalVisible}
+          onDismiss={() => setTextModalVisible(false)}
+          textInput={textInput}
+          onTextChange={setTextInput}
+          selectedFont={selectedFont}
+          selectedColor={selectedColor}
+          selectedSize={selectedSize}
+          selectedFontStyle={selectedFontStyle}
+          selectedAlignment={selectedAlignment}
+          onFontSelect={setSelectedFont}
+          onColorSelect={setSelectedColor}
+          onSizeChange={(text) => setSelectedSize(parseInt(text) || INITIAL_TEXT_SIZE)}
+          onFontStyleSelect={setSelectedFontStyle}
+          onAlignmentSelect={setSelectedAlignment}
+          onAddText={addText}
+          fontMenuVisible={fontMenuVisible}
+          colorMenuVisible={colorMenuVisible}
+          setFontMenuVisible={setFontMenuVisible}
+          setColorMenuVisible={setColorMenuVisible}
+        />
       </View>
-
-      <EditorToolbar
-        onAddImage={pickImage}
-        onAddText={() => setTextModalVisible(true)}
-        onUndo={undo}
-        onRedo={redo}
-        canUndo={history.past.length > 0}
-        canRedo={history.future.length > 0}
-      />
-
-      <TextModal
-        visible={textModalVisible}
-        onDismiss={() => setTextModalVisible(false)}
-        textInput={textInput}
-        onTextChange={setTextInput}
-        selectedFont={selectedFont}
-        selectedColor={selectedColor}
-        selectedSize={selectedSize}
-        selectedFontStyle={selectedFontStyle}
-        selectedAlignment={selectedAlignment}
-        onFontSelect={setSelectedFont}
-        onColorSelect={setSelectedColor}
-        onSizeChange={(text) => setSelectedSize(parseInt(text) || INITIAL_TEXT_SIZE)}
-        onFontStyleSelect={setSelectedFontStyle}
-        onAlignmentSelect={setSelectedAlignment}
-        onAddText={addText}
-        fontMenuVisible={fontMenuVisible}
-        colorMenuVisible={colorMenuVisible}
-        setFontMenuVisible={setFontMenuVisible}
-        setColorMenuVisible={setColorMenuVisible}
-      />
-    </View>
+    </TouchableWithoutFeedback>
   );
 };
 

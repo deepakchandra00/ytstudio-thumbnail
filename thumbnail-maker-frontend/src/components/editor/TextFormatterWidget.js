@@ -2,17 +2,33 @@ import React, { useState } from 'react';
 import { 
   View, 
   StyleSheet, 
-  ScrollView 
+  ScrollView, 
+  Dimensions 
 } from 'react-native';
 import { 
   Text, 
   IconButton, 
-  Colors, 
   Portal, 
   Modal, 
   Button,
+  Surface,
   Chip
 } from 'react-native-paper';
+import { ColorPicker, fromHsv } from 'react-native-color-picker';
+
+// Screen width for responsive design
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
+// Add local Colors definition
+const Colors = {
+  grey500: '#9E9E9E',
+  blue500: '#2196F3',
+  background: '#f5f5f5',
+  surface: '#FFFFFF',
+  accent: '#6200EE',
+  gradientStart: '#6A11CB',
+  gradientEnd: '#2575FC'
+};
 
 const FONT_FAMILIES = [
   'Arial', 
@@ -23,10 +39,10 @@ const FONT_FAMILIES = [
 ];
 
 const TEXT_EFFECTS = [
-  { name: 'Bold', icon: 'format-bold' },
-  { name: 'Italic', icon: 'format-italic' },
-  { name: 'Underline', icon: 'format-underline' },
-  { name: 'Strikethrough', icon: 'format-strikethrough' }
+  { name: 'Bold', icon: 'format-bold', style: 'fontWeight' },
+  { name: 'Italic', icon: 'format-italic', style: 'fontStyle' },
+  { name: 'Underline', icon: 'format-underline', style: 'textDecorationLine' },
+  { name: 'Strikethrough', icon: 'format-strikethrough', style: 'textDecorationLine' }
 ];
 
 const TEXT_ALIGNMENTS = [
@@ -44,37 +60,42 @@ const TextFormatterWidget = ({
     color: selectedElement.color || '#000000',
     fontSize: selectedElement.size || 16,
     fontFamily: selectedElement.fontFamily || 'Arial',
-    textAlign: selectedElement.textAlign || 'left',
-    effects: selectedElement.effects || []
+    effects: selectedElement.effects || [],
+    textAlign: selectedElement.textAlign || 'left'
   });
 
-  const handleColorChange = (color) => {
-    const newStyle = { ...textStyle, color };
-    setTextStyle(newStyle);
-    onUpdateTextStyle(newStyle);
-    setColorPickerVisible(false);
+  // Update text style and call onUpdateTextStyle
+  const handleStyleChange = (newStyleProps) => {
+    const updatedStyle = { ...textStyle, ...newStyleProps };
+    setTextStyle(updatedStyle);
+    
+    // Call the prop function to update the element
+    if (onUpdateTextStyle) {
+      onUpdateTextStyle(selectedElement.id, updatedStyle);
+    }
   };
 
-  const toggleEffect = (effect) => {
-    const newEffects = textStyle.effects.includes(effect)
-      ? textStyle.effects.filter(e => e !== effect)
-      : [...textStyle.effects, effect];
+  const toggleEffect = (effectName) => {
+    const currentEffects = textStyle.effects || [];
+    const updatedEffects = currentEffects.includes(effectName)
+      ? currentEffects.filter(effect => effect !== effectName)
+      : [...currentEffects, effectName];
     
-    const newStyle = { ...textStyle, effects: newEffects };
-    setTextStyle(newStyle);
-    onUpdateTextStyle(newStyle);
+    handleStyleChange({ effects: updatedEffects });
   };
 
   const handleAlignmentChange = (alignment) => {
-    const newStyle = { ...textStyle, textAlign: alignment };
-    setTextStyle(newStyle);
-    onUpdateTextStyle(newStyle);
+    handleStyleChange({ textAlign: alignment });
   };
 
-  const handleFontFamilyChange = (fontFamily) => {
-    const newStyle = { ...textStyle, fontFamily };
-    setTextStyle(newStyle);
-    onUpdateTextStyle(newStyle);
+  const handleFontChange = (fontFamily) => {
+    handleStyleChange({ fontFamily });
+  };
+
+  const handleColorChange = (color) => {
+    const hexColor = fromHsv(color);
+    handleStyleChange({ color: hexColor });
+    setColorPickerVisible(false);
   };
 
   const handleFontSizeChange = (increase) => {
@@ -82,136 +103,187 @@ const TextFormatterWidget = ({
       ? Math.min(textStyle.fontSize + 2, 72)
       : Math.max(textStyle.fontSize - 2, 8);
     
-    const newStyle = { ...textStyle, fontSize: newFontSize };
-    setTextStyle(newStyle);
-    onUpdateTextStyle(newStyle);
+    handleStyleChange({ fontSize: newFontSize });
   };
 
   return (
     <View style={styles.container}>
-      {/* Color Picker */}
-      <View style={styles.sectionContainer}>
-        <Text style={styles.sectionTitle}>Text Color</Text>
-        <View style={styles.colorSection}>
-          <IconButton
-            icon="palette"
-            color={textStyle.color}
-            size={30}
-            onPress={() => setColorPickerVisible(true)}
-          />
-          <Chip 
-            mode="outlined" 
-            style={{ backgroundColor: textStyle.color }}
-          >
-            {textStyle.color}
-          </Chip>
-        </View>
-      </View>
-      
-      {/* Font Size */}
-      <View style={styles.sectionContainer}>
-        <Text style={styles.sectionTitle}>Font Size: {textStyle.fontSize.toFixed(0)}</Text>
-        <View style={styles.fontSizeContainer}>
-          <IconButton
-            icon="minus"
-            onPress={() => handleFontSizeChange(false)}
-          />
-          <Text>{textStyle.fontSize.toFixed(0)}</Text>
-          <IconButton
-            icon="plus"
-            onPress={() => handleFontSizeChange(true)}
-          />
-        </View>
-      </View>
-
-      {/* Text Effects */}
-      <View style={styles.sectionContainer}>
-        <Text style={styles.sectionTitle}>Text Effects</Text>
-        <View style={styles.iconContainer}>
+      <ScrollView 
+        horizontal 
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContainer}
+      >
+        {/* Text Effects */}
+        <View style={styles.sectionContainer}>
           {TEXT_EFFECTS.map((effect) => (
             <IconButton
               key={effect.name}
               icon={effect.icon}
               color={textStyle.effects.includes(effect.name) 
-                ? Colors.blue500 
+                ? Colors.accent 
                 : Colors.grey500}
-              size={24}
+              size={20}
               onPress={() => toggleEffect(effect.name)}
+              style={[
+                styles.iconButton,
+                textStyle.effects.includes(effect.name) && styles.activeIconButton
+              ]}
             />
           ))}
         </View>
-      </View>
 
-      {/* Text Alignment */}
-      <View style={styles.sectionContainer}>
-        <Text style={styles.sectionTitle}>Alignment</Text>
-        <View style={styles.iconContainer}>
+        {/* Alignment */}
+        <View style={styles.sectionContainer}>
           {TEXT_ALIGNMENTS.map((alignment) => (
             <IconButton
               key={alignment.name}
               icon={alignment.icon}
               color={textStyle.textAlign === alignment.name.toLowerCase() 
-                ? Colors.blue500 
+                ? Colors.accent 
                 : Colors.grey500}
-              size={24}
+              size={20}
               onPress={() => handleAlignmentChange(alignment.name.toLowerCase())}
+              style={[
+                styles.iconButton,
+                textStyle.textAlign === alignment.name.toLowerCase() && styles.activeIconButton
+              ]}
             />
           ))}
         </View>
-      </View>
 
-      {/* Font Family */}
-      <View style={styles.sectionContainer}>
-        <Text style={styles.sectionTitle}>Font Family</Text>
-        <ScrollView 
-          horizontal 
-          showsHorizontalScrollIndicator={false}
-        >
+        {/* Font Family */}
+        <View style={styles.sectionContainer}>
           {FONT_FAMILIES.map((font) => (
-            <Button
+            <Chip
               key={font}
-              mode={textStyle.fontFamily === font ? 'contained' : 'outlined'}
-              style={styles.fontButton}
-              onPress={() => handleFontFamilyChange(font)}
+              selected={textStyle.fontFamily === font}
+              onPress={() => handleFontChange(font)}
+              style={[
+                styles.fontChip,
+                textStyle.fontFamily === font && styles.selectedFontChip
+              ]}
+              textStyle={styles.fontChipText}
             >
-              {font}
-            </Button>
+              {font.substring(0, 3)}
+            </Chip>
           ))}
-        </ScrollView>
-      </View>
+        </View>
+
+        {/* Color and Size */}
+        <View style={styles.sectionContainer}>
+          <IconButton
+            icon="palette"
+            color={textStyle.color}
+            size={20}
+            onPress={() => setColorPickerVisible(true)}
+            style={styles.colorButton}
+          />
+          <View style={styles.fontSizeControls}>
+            <IconButton
+              icon="minus"
+              size={16}
+              onPress={() => handleFontSizeChange(false)}
+            />
+            <Text style={styles.fontSizeText}>{textStyle.fontSize}</Text>
+            <IconButton
+              icon="plus"
+              size={16}
+              onPress={() => handleFontSizeChange(true)}
+            />
+          </View>
+        </View>
+      </ScrollView>
+
+      {/* Color Picker Modal */}
+      <Portal>
+        <Modal 
+          visible={isColorPickerVisible} 
+          onDismiss={() => setColorPickerVisible(false)}
+          contentContainerStyle={styles.colorPickerModal}
+        >
+          <ColorPicker
+            onColorSelected={handleColorChange}
+            style={styles.colorPicker}
+            defaultColor={textStyle.color}
+          />
+          <Button 
+            mode="contained" 
+            onPress={() => setColorPickerVisible(false)}
+            style={styles.colorPickerCloseButton}
+          >
+            Close
+          </Button>
+        </Modal>
+      </Portal>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#f5f5f5',
-    padding: 15,
+    position: 'absolute',
+    bottom: 10,
+    left: 10,
+    right: 10,
+    backgroundColor: Colors.surface,
     borderRadius: 10,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  scrollContainer: {
+    alignItems: 'center',
+    paddingVertical: 5,
+    paddingHorizontal: 10,
   },
   sectionContainer: {
-    marginVertical: 10,
-  },
-  sectionTitle: {
-    marginBottom: 10,
-    fontWeight: 'bold',
-  },
-  iconContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-  },
-  colorSection: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  fontSizeContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  fontButton: {
     marginHorizontal: 5,
   },
+  iconButton: {
+    margin: 2,
+    padding: 2,
+  },
+  activeIconButton: {
+    backgroundColor: 'rgba(102, 0, 238, 0.1)',
+  },
+  fontChip: {
+    marginHorizontal: 2,
+    height: 30,
+  },
+  selectedFontChip: {
+    backgroundColor: Colors.accent,
+  },
+  fontChipText: {
+    fontSize: 10,
+  },
+  colorButton: {
+    margin: 2,
+  },
+  fontSizeControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  fontSizeText: {
+    fontSize: 12,
+    marginHorizontal: 5,
+  },
+  colorPickerModal: {
+    backgroundColor: Colors.surface,
+    padding: 20,
+    margin: 20,
+    borderRadius: 10,
+  },
+  colorPicker: {
+    width: '100%',
+    height: 300,
+  },
+  colorPickerCloseButton: {
+    marginTop: 15,
+  }
 });
 
 export default TextFormatterWidget;
