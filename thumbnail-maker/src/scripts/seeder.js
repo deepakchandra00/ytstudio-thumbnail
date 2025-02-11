@@ -6,76 +6,296 @@ const Thumbnail = require('../models/Thumbnail');
 require('dotenv').config();
 
 const templates = [
-  {
-    name: "Gaming Thumbnail",
-    category: "Gaming",
-    thumbnail: "https://your-s3-bucket.s3.region.amazonaws.com/thumbnails/gaming-template.jpg",
-    imageUrl: "https://your-s3-bucket.s3.region.amazonaws.com/thumbnails/gaming-template.jpg",
-    imageKey: "thumbnails/gaming-template.jpg",
-    canvasSize: { width: 1280, height: 720 },
-    background: {
-      type: "image",
-      url: "https://your-s3-bucket.s3.region.amazonaws.com/backgrounds/gaming-bg.png"
-    },
-    elements: [
-      {
-        type: "image",
-        url: "https://your-s3-bucket.s3.region.amazonaws.com/elements/character.png",
-        position: { x: 300, y: 150 },
-        size: { width: 400, height: 400 },
-        opacity: 1,
-        rotation: 0
-      },
-      {
-        type: "text",
-        content: "Epic Win!",
-        position: { x: 500, y: 100 },
-        style: {
-          fontFamily: "Impact",
-          fontSize: 64,
-          color: "#FFD700",
-          bold: true,
-          shadow: { color: "#000000", blur: 5, offsetX: 3, offsetY: 3 }
+    {
+      name: 'Minimalist Design',
+      category: 'Minimalist',
+      elements: [
+        {
+          type: 'text',
+          content: 'Simple & Clean',
+          position: { x: 50, y: 50 },
+          font: 'sans-serif',
+          size: 28,
+          color: '#000000',
+          fontStyle: 'bold',
+          alignment: 'center',
+          zIndex: 0,
+        },
+        {
+          type: 'text',
+          content: 'Less is more.',
+          position: { x: 50, y: 150 },
+          font: 'sans-serif',
+          size: 18,
+          color: '#555555',
+          fontStyle: 'normal',
+          alignment: 'center',
+          zIndex: 1,
         }
-      }
-    ],
-    isPublic: true
-  },
-  {
-    name: "Tech Review",
-    category: "Technology",
-    thumbnail: "https://your-s3-bucket.s3.region.amazonaws.com/thumbnails/tech-template.jpg",
-    imageUrl: "https://your-s3-bucket.s3.region.amazonaws.com/thumbnails/tech-template.jpg",
-    imageKey: "thumbnails/tech-template.jpg",
-    canvasSize: { width: 1280, height: 720 },
-    background: {
-      type: "gradient",
-      colors: ["#2C3E50", "#3498DB"]
+      ],
+      backgroundImage: 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80',
     },
-    elements: [
-      {
-        type: "image",
-        url: "https://your-s3-bucket.s3.region.amazonaws.com/elements/device.png",
-        position: { x: 200, y: 200 },
-        size: { width: 500, height: 300 },
-        opacity: 1,
-        rotation: -15
-      },
-      {
-        type: "text",
-        content: "BEST TECH 2024",
-        position: { x: 650, y: 150 },
-        style: {
-          fontFamily: "Arial",
-          fontSize: 72,
-          color: "#FFFFFF",
-          bold: true,
-          shadow: { color: "#000000", blur: 3, offsetX: 2, offsetY: 2 }
+    {
+      name: 'Modern Business',
+      category: 'Business',
+      elements: [
+        {
+          type: 'text',
+          content: 'Innovate Your Business',
+          position: { x: 50, y: 50 },
+          font: 'sans-serif',
+          size: 30,
+          color: '#FFFFFF',
+          fontStyle: 'bold',
+          alignment: 'center',
+          zIndex: 0,
+        },
+        {
+          type: 'text',
+          content: 'Grow with us.',
+          position: { x: 50, y: 150 },
+          font: 'sans-serif',
+          size: 20,
+          color: '#CCCCCC',
+          fontStyle: 'normal',
+          alignment: 'center',
+          zIndex: 1,
         }
-      }
-    ],
-    isPublic: true
-  }
+      ],
+      backgroundImage: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?ixlib=rb-1.2.1&auto=format&fit=crop&w=1352&q=80',
+    },
+    {
+      name: 'Nature Inspired',
+      category: 'Nature',
+      elements: [
+        {
+          type: 'text',
+          content: 'Explore the Wild',
+          position: { x: 50, y: 50 },
+          font: 'serif',
+          size: 32,
+          color: '#FFFFFF',
+          fontStyle: 'bold',
+          alignment: 'center',
+          zIndex: 0,
+        },
+        {
+          type: 'text',
+          content: 'Feel the beauty of nature.',
+          position: { x: 50, y: 150 },
+          font: 'serif',
+          size: 20,
+          color: '#DDDDDD',
+          fontStyle: 'italic',
+          alignment: 'center',
+          zIndex: 1,
+        }
+      ],
+      backgroundImage: 'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80',
+    },
+    {
+      name: 'Retro Vibes',
+      category: 'Retro',
+      elements: [
+        {
+          type: 'text',
+          content: 'Back to the 80s',
+          position: { x: 50, y: 50 },
+          font: 'monospace',
+          size: 34,
+          color: '#FF00FF',
+          fontStyle: 'bold',
+          alignment: 'center',
+          zIndex: 0,
+        },
+        {
+          type: 'text',
+          content: 'Neon lights and disco nights.',
+          position: { x: 50, y: 150 },
+          font: 'monospace',
+          size: 20,
+          color: '#00FFFF',
+          fontStyle: 'normal',
+          alignment: 'center',
+          zIndex: 1,
+        }
+      ],
+      backgroundImage: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd880?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80',
+    },
+    {
+      name: 'Elegant Wedding',
+      category: 'Wedding',
+      elements: [
+        {
+          type: 'text',
+          content: 'Happily Ever After',
+          position: { x: 50, y: 50 },
+          font: 'serif',
+          size: 36,
+          color: '#FFFFFF',
+          fontStyle: 'bold',
+          alignment: 'center',
+          zIndex: 0,
+        },
+        {
+          type: 'text',
+          content: 'Celebrate love.',
+          position: { x: 50, y: 150 },
+          font: 'serif',
+          size: 24,
+          color: '#FFD700',
+          fontStyle: 'italic',
+          alignment: 'center',
+          zIndex: 1,
+        }
+      ],
+      backgroundImage: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80',
+    },
+    {
+      name: 'Tech Futuristic',
+      category: 'Technology',
+      elements: [
+        {
+          type: 'text',
+          content: 'Future is Here',
+          position: { x: 50, y: 50 },
+          font: 'sans-serif',
+          size: 32,
+          color: '#00FF00',
+          fontStyle: 'bold',
+          alignment: 'center',
+          zIndex: 0,
+        },
+        {
+          type: 'text',
+          content: 'Embrace innovation.',
+          position: { x: 50, y: 150 },
+          font: 'sans-serif',
+          size: 20,
+          color: '#FFFFFF',
+          fontStyle: 'normal',
+          alignment: 'center',
+          zIndex: 1,
+        }
+      ],
+      backgroundImage: 'https://images.unsplash.com/photo-1518770660439-4636190af475?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80',
+    },
+    {
+      name: 'Travel Adventure',
+      category: 'Travel',
+      elements: [
+        {
+          type: 'text',
+          content: 'Wanderlust',
+          position: { x: 50, y: 50 },
+          font: 'sans-serif',
+          size: 40,
+          color: '#FFFFFF',
+          fontStyle: 'bold',
+          alignment: 'center',
+          zIndex: 0,
+        },
+        {
+          type: 'text',
+          content: 'Explore the world.',
+          position: { x: 50, y: 150 },
+          font: 'sans-serif',
+          size: 24,
+          color: '#FFD700',
+          fontStyle: 'normal',
+          alignment: 'center',
+          zIndex: 1,
+        }
+      ],
+      backgroundImage: 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?ixlib=rb-1.2.1&auto=format&fit=crop&w=1351&q=80',
+    },
+    {
+      name: 'Vintage Aesthetic',
+      category: 'Vintage',
+      elements: [
+        {
+          type: 'text',
+          content: 'Timeless Beauty',
+          position: { x: 50, y: 50 },
+          font: 'serif',
+          size: 36,
+          color: '#8B4513',
+          fontStyle: 'bold',
+          alignment: 'center',
+          zIndex: 0,
+        },
+        {
+          type: 'text',
+          content: 'Classic and elegant.',
+          position: { x: 50, y: 150 },
+          font: 'serif',
+          size: 24,
+          color: '#654321',
+          fontStyle: 'italic',
+          alignment: 'center',
+          zIndex: 1,
+        }
+      ],
+      backgroundImage: 'https://images.unsplash.com/photo-1506260408121-e353d10b87c7?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80',
+    },
+    {
+      name: 'Fitness Motivation',
+      category: 'Fitness',
+      elements: [
+        {
+          type: 'text',
+          content: 'Push Your Limits',
+          position: { x: 50, y: 50 },
+          font: 'sans-serif',
+          size: 34,
+          color: '#FFFFFF',
+          fontStyle: 'bold',
+          alignment: 'center',
+          zIndex: 0,
+        },
+        {
+          type: 'text',
+          content: 'Be stronger every day.',
+          position: { x: 50, y: 150 },
+          font: 'sans-serif',
+          size: 22,
+          color: '#FF4500',
+          fontStyle: 'normal',
+          alignment: 'center',
+          zIndex: 1,
+        }
+      ],
+      backgroundImage: 'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80',
+    },
+    {
+      name: 'Artistic Expression',
+      category: 'Art',
+      elements: [
+        {
+          type: 'text',
+          content: 'Create & Inspire',
+          position: { x: 50, y: 50 },
+          font: 'cursive',
+          size: 38,
+          color: '#000000',
+          fontStyle: 'bold',
+          alignment: 'center',
+          zIndex: 0,
+        },
+        {
+          type: 'text',
+          content: 'Unleash your creativity.',
+          position: { x: 50, y: 150 },
+          font: 'cursive',
+          size: 24,
+          color: '#555555',
+          fontStyle: 'normal',
+          alignment: 'center',
+          zIndex: 1,
+        }
+      ],
+      backgroundImage: 'https://images.unsplash.com/photo-1499781350541-7783f6c6a0c8?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80',
+    }
 ];
 
 const users = [

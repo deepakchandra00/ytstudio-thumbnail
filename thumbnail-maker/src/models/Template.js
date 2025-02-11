@@ -6,15 +6,36 @@ const elementSchema = new mongoose.Schema({
     enum: ['image', 'text'],
     required: true
   },
-  url: String, // Optional, only for image type
-  content: String, // Optional, only for text type
+  content: String, // For text elements
   position: {
     x: { type: Number, required: true },
     y: { type: Number, required: true }
   },
+  font: {
+    type: String,
+    default: 'serif'
+  },
   size: {
-    width: Number,
-    height: Number
+    type: Number,
+    default: 24
+  },
+  color: {
+    type: String,
+    default: '#000000'
+  },
+  fontStyle: {
+    type: String,
+    enum: ['normal', 'italic', 'bold', 'bold-italic'],
+    default: 'normal'
+  },
+  alignment: {
+    type: String,
+    enum: ['left', 'center', 'right'],
+    default: 'left'
+  },
+  zIndex: {
+    type: Number,
+    default: 0
   },
   opacity: {
     type: Number,
@@ -23,18 +44,6 @@ const elementSchema = new mongoose.Schema({
   rotation: {
     type: Number,
     default: 0
-  },
-  style: {
-    fontFamily: String,
-    fontSize: Number,
-    color: String,
-    bold: Boolean,
-    shadow: {
-      color: String,
-      blur: Number,
-      offsetX: Number,
-      offsetY: Number
-    }
   }
 });
 
@@ -44,34 +53,20 @@ const templateSchema = new mongoose.Schema({
     required: true
   },
   category: {
+    type: String,
+    required: true
+  },
+  elements: [elementSchema],
+  backgroundImage: {
     type: String
   },
   thumbnail: {
-    type: String,
-    required: true
-  },
-  imageUrl: {
-    type: String,
-    required: true
-  },
-  imageKey: {
-    type: String,
-    required: true
+    type: String
   },
   canvasSize: {
-    width: { type: Number, required: true, default: 1280 },
-    height: { type: Number, required: true, default: 720 }
+    width: { type: Number, default: 1280 },
+    height: { type: Number, default: 720 }
   },
-  background: {
-    type: {
-      type: String,
-      enum: ['image', 'gradient', 'color'],
-      required: true
-    },
-    url: String,
-    colors: [String]
-  },
-  elements: [elementSchema],
   isPublic: {
     type: Boolean,
     default: true

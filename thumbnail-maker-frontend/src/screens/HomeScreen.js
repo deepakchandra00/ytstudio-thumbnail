@@ -29,10 +29,42 @@ console.log(templates, loading, error)
 
   const renderTemplate = ({ item }) => (
     <Card style={styles.card}>
-      <Card.Cover source={{ uri: item.preview }} />
+      <View style={{ position: 'relative' }}>
+        <Card.Cover 
+          source={{ uri: item.backgroundImage || item.preview }} 
+          style={{ 
+            height: 200, 
+            width: '100%', 
+            aspectRatio: 16/9 
+          }} 
+        />
+        {item.elements && item.elements.map((element, index) => {
+          if (element.type === 'text') {
+            return (
+              <Text
+                key={index}
+                style={{
+                  position: 'absolute',
+                  left: `${element.position.x}%`,
+                  top: `${element.position.y}%`,
+                  color: element.color,
+                  fontSize: element.size,
+                  fontFamily: element.font,
+                  fontWeight: element.fontStyle === 'bold' ? 'bold' : 'normal',
+                  textAlign: element.alignment,
+                  zIndex: element.zIndex,
+                }}
+              >
+                {element.content}
+              </Text>
+            );
+          }
+          return null;
+        })}
+      </View>
       <Card.Title title={item.name} />
       <Card.Actions>
-        <Button onPress={() => navigation.navigate('Editor', { template: item })}>
+        <Button onPress={() => navigation.navigate('Editor', { template: { ...item } })}>
           Use Template
         </Button>
       </Card.Actions>
@@ -72,7 +104,7 @@ console.log(templates, loading, error)
           />
           <Button 
             mode="contained" 
-            onPress={() => navigation.navigate('Editor', { template: null })}
+            onPress={() => navigation.navigate('Editor', { template: {} })}
             style={styles.blankButton}
           >
             Start from Blank

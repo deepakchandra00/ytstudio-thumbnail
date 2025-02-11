@@ -18,6 +18,7 @@ import Animated, {
   useAnimatedStyle,
   withSpring,
 } from 'react-native-reanimated';
+import { useRoute } from '@react-navigation/native';
 
 import TextElement from '../components/editor/TextElement';
 import ImageElement from '../components/editor/ImageElement';
@@ -55,43 +56,44 @@ const TEXT_ALIGNMENTS = [
 // Dummy base64 encoded background image (a simple white 1x1 pixel PNG)
 const DUMMY_BACKGROUND_IMAGE = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg==';
 
-// Default Template Object
-const DEFAULT_TEMPLATE = {
-  id: 'default_template',
-  name: 'Blank Canvas',
-  elements: [
-    {
-      type: 'text',
-      content: 'Your Title Here',
-      position: { x: 50, y: 50 },
-      font: Platform.select({ ios: 'Helvetica', default: 'sans-serif' }),
-      size: 32,
-      color: COLORS[0].value, // Black
-      fontStyle: 'bold',
-      alignment: 'center',
-      zIndex: 0,
-    },
-    {
-      type: 'text',
-      content: 'Subtitle or Description',
-      position: { x: 50, y: 150 },
-      font: Platform.select({ ios: 'Helvetica', default: 'sans-serif' }),
-      size: 20,
-      color: COLORS[0].value, // Black
-      fontStyle: 'normal',
-      alignment: 'center',
-      zIndex: 1,
-    }
-  ],
-  backgroundImage: DUMMY_BACKGROUND_IMAGE,
-};
-
 const EditorScreen = () => {
+  const route = useRoute();
+  const { template } = route.params || {};
+
   // Refs
   const canvasRef = useRef(null);
 
   // Store
   const { elements, addElement, updateElement, removeElement, history, undo, redo, setElements } = useEditorStore();
+
+  // Load template on initial render
+  useEffect(() => {
+    if (template) {
+      // Reset elements to template elements
+      setElements(template.elements || []);
+      
+      // Set background image if template has one
+      if (template.backgroundImage) {
+        setBackgroundImage(template.backgroundImage);
+      }
+    } else {
+      // If no template is provided, set up a blank canvas with initial text
+      setElements([
+        {
+          type: 'text',
+          content: 'Your Title Here',
+          position: { x: 50, y: 50 },
+          font: Platform.select({ ios: 'Helvetica', default: 'sans-serif' }),
+          size: 32,
+          color: COLORS[0].value, // Black
+          fontStyle: 'bold',
+          alignment: 'center',
+          zIndex: 0,
+        }
+      ]);
+      setBackgroundImage(DUMMY_BACKGROUND_IMAGE);
+    }
+  }, [template, setElements]);
 
   // State
   const [textInput, setTextInput] = useState('');
@@ -296,20 +298,21 @@ const EditorScreen = () => {
     setElements([]);
 
     // Add default template elements
-    DEFAULT_TEMPLATE.elements.forEach(element => {
-      addElement(element);
-    });
-
-    // Set background image if exists
-    if (DEFAULT_TEMPLATE.backgroundImage) {
-      setBackgroundImage(DEFAULT_TEMPLATE.backgroundImage);
-    }
+    setElements([
+      {
+        type: 'text',
+        content: 'Your Title Here',
+        position: { x: 50, y: 50 },
+        font: Platform.select({ ios: 'Helvetica', default: 'sans-serif' }),
+        size: 32,
+        color: COLORS[0].value, // Black
+        fontStyle: 'bold',
+        alignment: 'center',
+        zIndex: 0,
+      }
+    ]);
+    setBackgroundImage(DUMMY_BACKGROUND_IMAGE);
   }, [addElement, setElements]);
-
-  // Optional: Automatically load default template on first render
-  useEffect(() => {
-    loadDefaultTemplate();
-  }, [loadDefaultTemplate]);
 
   // Optionally add a method to reset to default template in the toolbar or header
   const resetToDefaultTemplate = () => {
