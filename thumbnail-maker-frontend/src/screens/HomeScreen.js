@@ -1,12 +1,15 @@
-import React, { useEffect } from 'react';
-import { View, FlatList, StyleSheet, Text } from 'react-native';
-import { Button, Card, Title, Avatar, Appbar, ActivityIndicator } from 'react-native-paper';
+import React, { useEffect, useState } from 'react';
+import { View, FlatList, StyleSheet, Text, ScrollView, Dimensions, TouchableOpacity } from 'react-native';
+import { Button, Card, Title, Appbar, ActivityIndicator } from 'react-native-paper';
 import { useAuth, useTemplateStore } from '../store';
+
+const { width } = Dimensions.get('window');
 
 const HomeScreen = ({ navigation }) => {
   const { user, logout } = useAuth();
   const { templates, loading, error, fetchTemplates } = useTemplateStore();
-console.log(templates, loading, error)
+  const [categorizedTemplates, setCategorizedTemplates] = useState({});
+
   useEffect(() => {
     const loadTemplates = async () => {
       try {
@@ -18,6 +21,20 @@ console.log(templates, loading, error)
     loadTemplates();
   }, []);
 
+  useEffect(() => {
+    if (templates && templates.length > 0) {
+      const categorized = templates.reduce((acc, template) => {
+        const category = template.category || 'Uncategorized';
+        if (!acc[category]) {
+          acc[category] = [];
+        }
+        acc[category].push(template);
+        return acc;
+      }, {});
+      setCategorizedTemplates(categorized);
+    }
+  }, [templates]);
+
   const handleLogout = async () => {
     try {
       await logout();
@@ -27,48 +44,84 @@ console.log(templates, loading, error)
     }
   };
 
-  const renderTemplate = ({ item }) => (
-    <Card style={styles.card}>
-      <View style={{ position: 'relative' }}>
-        <Card.Cover 
-          source={{ uri: item.backgroundImage || item.preview }} 
-          style={{ 
-            height: 200, 
-            width: '100%', 
-            aspectRatio: 16/9 
-          }} 
-        />
-        {item.elements && item.elements.map((element, index) => {
-          if (element.type === 'text') {
-            return (
-              <Text
-                key={index}
-                style={{
-                  position: 'absolute',
-                  left: `${element.position.x}%`,
-                  top: `${element.position.y}%`,
-                  color: element.color,
-                  fontSize: element.size,
-                  fontFamily: element.font,
-                  fontWeight: element.fontStyle === 'bold' ? 'bold' : 'normal',
-                  textAlign: element.alignment,
-                  zIndex: element.zIndex,
-                }}
-              >
-                {element.content}
-              </Text>
-            );
-          }
-          return null;
-        })}
-      </View>
-      <Card.Title title={item.name} />
-      <Card.Actions>
-        <Button onPress={() => navigation.navigate('Editor', { template: { ...item } })}>
-          Use Template
-        </Button>
-      </Card.Actions>
-    </Card>
+  const renderTemplate = ({ item }) => {
+    const cardWidth = width * 0.5;
+    const cardHeight = cardWidth * (9/16);
+    const originalHeight = 200; // Original template height
+    const originalWidth = 356; // Assuming original width was around 356px
+    const heightRatio = cardHeight / originalHeight;
+    const widthRatio = cardWidth / originalWidth;
+  
+    return (
+      <TouchableOpacity 
+        key={item.id}
+        style={[styles.card, { width: cardWidth }]} 
+        onPress={() => navigation.navigate('Editor', { template: { ...item } })}
+      >
+        <View style={{ position: 'relative', height: cardHeight }}>
+          <Card.Cover 
+            source={{ uri: item.backgroundImage || item.preview }} 
+            style={{ 
+              height: '100%', 
+              width: '100%', 
+              aspectRatio: 16/9 
+            }} 
+          />
+          {item.elements && item.elements.map((element, index) => {
+            if (element.type === 'text') {
+              // Scale font size proportionally to the card height
+              const scaledFontSize = element.size * heightRatio;
+              
+              // Adjust position based on both height and width ratios
+              // Ensure elements stay within 0-100% range
+              const adjustedX = Math.min(Math.max(element.position.x * widthRatio, 0), 100);
+              const adjustedY = Math.min(Math.max(element.position.y * heightRatio, 0), 100);
+              
+              return (
+                <Text
+                  key={`${item.id}-element-${index}`}
+                  style={{
+                    position: 'absolute',
+                    left: `${adjustedX}%`,
+                    top: `${adjustedY}%`,
+                    color: element.color,
+                    fontSize: scaledFontSize,
+                    fontFamily: element.font,
+                    fontWeight: element.fontStyle === 'bold' ? 'bold' : 'normal',
+                    textAlign: element.alignment,
+                    zIndex: element.zIndex,
+                    maxWidth: '90%', // Prevent text from overflowing
+                    overflow: 'hidden',
+                  }}
+                  numberOfLines={2} // Limit to 2 lines to prevent overflow
+                  ellipsizeMode="tail"
+                >
+                  {element.content}
+                </Text>
+              );
+            }
+            return null;
+          })}
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
+  const CategorySlider = ({ category, templates }) => (
+    <View style={styles.categoryContainer}>
+      <Title style={styles.categoryTitle}>{category}</Title>
+      <FlatList
+        data={templates}
+        renderItem={renderTemplate}
+        keyExtractor={(item) => `${category}-${item.id}`}
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.horizontalList}
+        snapToAlignment="start"
+        snapToInterval={width * 0.5}
+        decelerationRate="fast"
+      />
+    </View>
   );
 
   if (loading) {
@@ -94,14 +147,14 @@ console.log(templates, loading, error)
           </Button>
         </View>
       ) : (
-        <>
-          <Title style={styles.title}>Choose a Template</Title>
-          <FlatList
-            data={templates}
-            renderItem={renderTemplate}
-            keyExtractor={item => item.id}
-            numColumns={2}
-          />
+        <ScrollView>
+          {Object.entries(categorizedTemplates).map(([category, categoryTemplates]) => (
+            <CategorySlider 
+              key={category} 
+              category={category} 
+              templates={categoryTemplates} 
+            />
+          ))}
           <Button 
             mode="contained" 
             onPress={() => navigation.navigate('Editor', { template: {} })}
@@ -109,7 +162,7 @@ console.log(templates, loading, error)
           >
             Start from Blank
           </Button>
-        </>
+        </ScrollView>
       )}
     </View>
   );
@@ -124,13 +177,21 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  title: {
-    marginVertical: 16,
-    textAlign: 'center',
+  categoryContainer: {
+    marginVertical: 10,
+  },
+  categoryTitle: {
+    marginHorizontal: 16,
+    marginBottom: 10,
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  horizontalList: {
+    paddingHorizontal: 10,
   },
   card: {
-    flex: 1,
-    margin: 8,
+    width: width * 0.5,
+    padding: 5,
   },
   blankButton: {
     margin: 16,
@@ -146,4 +207,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default HomeScreen; 
+export default HomeScreen;

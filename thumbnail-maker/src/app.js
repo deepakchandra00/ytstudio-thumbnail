@@ -8,15 +8,18 @@ const { cache } = require('./middleware/cache');
 const healthRoutes = require('./routes/healthRoutes');
 const http = require('http');
 const SocketService = require('./services/socketService');
+const cors = require('cors');
 
 // Routes
 const authRoutes = require('./routes/authRoutes');
 const templateRoutes = require('./routes/templateRoutes');
 const thumbnailRoutes = require('./routes/thumbnailRoutes');
+const stickerRoutes = require('./routes/stickerRoutes');
 
 dotenv.config();
 
 const app = express();
+app.use(cors());
 
 // Middleware
 app.use(express.json());
@@ -37,6 +40,8 @@ if (process.env.REDIS_HOST) {
   app.use('/api/templates', templateRoutes);
   app.use('/api/thumbnails', thumbnailRoutes);
 }
+
+app.use('/api/stickers', stickerRoutes);
 
 // Swagger documentation
 app.use('/api-docs', swaggerUI.serve, swaggerUI.setup(swaggerConfig));
