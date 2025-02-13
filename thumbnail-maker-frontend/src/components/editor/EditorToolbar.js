@@ -6,8 +6,8 @@ import StickerPicker from './StickerPicker';
 const EditorToolbar = ({ onAddImage, onAddText, onUndo, onRedo, canUndo, canRedo, onAddSticker, resetToDefaultTemplate }) => {
   const [stickerPickerVisible, setStickerPickerVisible] = useState(false);
 
-  const handleStickerSelect = (stickerUrl) => {
-    onAddSticker(stickerUrl);
+  const handleStickerSelect = (stickerElement) => {
+    onAddSticker(stickerElement);
   };
 
   return (
