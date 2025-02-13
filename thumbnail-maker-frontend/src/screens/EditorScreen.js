@@ -66,6 +66,10 @@ const EditorScreen = () => {
   // Store
   const { elements, addElement, updateElement, removeElement, history, undo, redo, setElements } = useEditorStore();
 
+  // Background image handling
+  const [backgroundImage, setBackgroundImage] = useState(DUMMY_BACKGROUND_IMAGE);
+  const backgroundImageObj = useImage(backgroundImage);
+
   // Load template on initial render
   useEffect(() => {
     if (template) {
@@ -95,6 +99,13 @@ const EditorScreen = () => {
     }
   }, [template, setElements]);
 
+  // Ensure image is loaded before rendering
+  useEffect(() => {
+    if (!backgroundImageObj) {
+      console.warn('Background image failed to load');
+    }
+  }, [backgroundImageObj]);
+
   // State
   const [textInput, setTextInput] = useState('');
   const [textModalVisible, setTextModalVisible] = useState(false);
@@ -106,7 +117,6 @@ const EditorScreen = () => {
   );
   const [selectedColor, setSelectedColor] = useState(COLORS[0].value);
   const [selectedSize, setSelectedSize] = useState(20);
-  const [backgroundImage, setBackgroundImage] = useState(null);
   const [headerMenuVisible, setHeaderMenuVisible] = useState(false);
   const [selectedFontStyle, setSelectedFontStyle] = useState('normal');
   const [selectedAlignment, setSelectedAlignment] = useState('left');
@@ -319,51 +329,6 @@ const EditorScreen = () => {
     loadDefaultTemplate();
   };
 
-  // State to store the background image
-  const [backgroundImageObj, setBackgroundImageObj] = useState(null);
-
-  // Effect to handle background image loading
-  useEffect(() => {
-    let isMounted = true;
-    
-    const loadBackgroundImage = async () => {
-      if (!backgroundImage) {
-        setBackgroundImageObj(null);
-        return;
-      }
-
-      try {
-        // Handle base64 string
-        if (typeof backgroundImage === 'string' && backgroundImage.startsWith('data:image')) {
-          const image = useImage(backgroundImage);
-          if (isMounted) {
-            setBackgroundImageObj(image);
-          }
-          return;
-        }
-
-        // Handle image object with uri
-        if (backgroundImage?.uri) {
-          const image = useImage(backgroundImage.uri);
-          if (isMounted) {
-            setBackgroundImageObj(image);
-          }
-        }
-      } catch (error) {
-        console.error('Error loading background image:', error);
-        if (isMounted) {
-          setBackgroundImageObj(null);
-        }
-      }
-    };
-
-    loadBackgroundImage();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [backgroundImage]);
-
   return (
     <TouchableWithoutFeedback onPress={handleDeselectElement}>
       <View style={styles.container}>
@@ -442,6 +407,12 @@ const EditorScreen = () => {
           onAddText={() => setTextModalVisible(true)}
           onUndo={undo}
           onRedo={redo}
+          onAddSticker={(stickerElement) => {
+            addElement({
+              ...stickerElement,
+              zIndex: elements.length
+            });
+          }}
           canUndo={history.past.length > 0}
           canRedo={history.future.length > 0}
           resetToDefaultTemplate={resetToDefaultTemplate}
