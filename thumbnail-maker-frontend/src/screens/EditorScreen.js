@@ -74,7 +74,73 @@ const EditorScreen = () => {
 
   // Background image handling
   const [backgroundImage, setBackgroundImage] = useState(DUMMY_BACKGROUND_IMAGE);
-  const backgroundImageObj = useImage(backgroundImage);
+  const [backgroundImageObj, setBackgroundImageObj] = useState(null);
+  const processedBackgroundImage = useImage(backgroundImage);
+
+  const pickBackgroundImage = useCallback(async () => {
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permission needed', 'Sorry, we need camera roll permissions to make this work!');
+        return;
+      }
+
+      const imageAsset = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: false,
+        quality: 1,
+      });
+      
+      console.log('Selected Background Image:', JSON.stringify(imageAsset, null, 2));
+
+      if (!imageAsset.canceled && imageAsset.assets && imageAsset.assets[0]) {
+        const selectedImage = imageAsset.assets[0];
+        
+        Alert.alert(
+          'Set Background',
+          'Do you want to set this image as the background?',
+          [
+            {
+              text: 'Cancel',
+              style: 'cancel'
+            },
+            {
+              text: 'Set Background',
+              onPress: () => {
+                // Ensure we always set a string URI
+                const backgroundUri = selectedImage.uri;
+                console.log('Selected Background URI:', backgroundUri);
+                
+                if (backgroundUri) {
+                  // Set ONLY the URI string to backgroundImage
+                  setBackgroundImage(backgroundUri);
+                  
+                  // Update backgroundImageObj with the full image details
+                  setBackgroundImageObj({
+                    uri: backgroundUri,
+                    width: selectedImage.width,
+                    height: selectedImage.height,
+                    originalWidth: selectedImage.width,
+                    originalHeight: selectedImage.height
+                  });
+                } else {
+                  Alert.alert('Error', 'Could not retrieve image URI');
+                }
+              }
+            }
+          ]
+        );
+      } else {
+        Alert.alert('Error', 'No image selected');
+      }
+    } catch (error) {
+      console.error('Error picking background image:', error);
+      Alert.alert(
+        'Error', 
+        'Failed to set background image. Please try again.'
+      );
+    }
+  }, []);
 
   // Load template on initial render
   useEffect(() => {
@@ -107,10 +173,10 @@ const EditorScreen = () => {
 
   // Ensure image is loaded before rendering
   useEffect(() => {
-    if (!backgroundImageObj) {
+    if (!processedBackgroundImage) {
       console.warn('Background image failed to load');
     }
-  }, [backgroundImageObj]);
+  }, [processedBackgroundImage]);
 
   // State
   const [textInput, setTextInput] = useState('');
@@ -154,7 +220,7 @@ const EditorScreen = () => {
         return;
       }
 
-      const result = await ImagePicker.launchImageLibraryAsync({
+      const imageAsset = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
         aspect: [16, 9],
@@ -164,11 +230,13 @@ const EditorScreen = () => {
         maxFileSize: 10 * 1024 * 1024, 
       });
 
-      if (!result.canceled && result.assets && result.assets.length > 0) {
-        const imageAsset = result.assets[0];
+      console.log('Selected Image:', JSON.stringify(imageAsset, null, 2));
+
+      if (!imageAsset.canceled && imageAsset.assets && imageAsset.assets[0]) {
+        const selectedImage = imageAsset.assets[0];
         
         // Validate image dimensions
-        if (imageAsset.width > 4096 || imageAsset.height > 4096) {
+        if (selectedImage.width > 4096 || selectedImage.height > 4096) {
           Alert.alert(
             'Image Too Large', 
             'Image is too large. Maximum dimensions are 4096x4096 pixels.'
@@ -178,23 +246,21 @@ const EditorScreen = () => {
 
         addElement({
           type: 'image',
-          uri: imageAsset.uri,
+          uri: selectedImage.uri,
           position: { x: 0, y: 0 },
-          width: Math.min(CANVAS_WIDTH / 3, imageAsset.width),
-          height: Math.min((CANVAS_WIDTH / 3) * (9/16), imageAsset.height),
+          width: Math.min(CANVAS_WIDTH / 3, selectedImage.width),
+          height: Math.min((CANVAS_WIDTH / 3) * (9/16), selectedImage.height),
           zIndex: elements.length,
-          originalWidth: imageAsset.width,
-          originalHeight: imageAsset.height,
         });
       }
     } catch (error) {
       console.error('Error picking image:', error);
       Alert.alert(
         'Error', 
-        'Failed to upload image. Please try again.'
+        'Failed to pick image. Please try again.'
       );
     }
-  }, [addElement, elements.length]);
+  }, [elements, addElement]);
 
   const addText = useCallback(() => {
     if (textInput.trim()) {
@@ -231,73 +297,6 @@ const EditorScreen = () => {
   const logCurrentElements = useCallback(() => {
     console.log('Current Elements:', JSON.stringify(elements, null, 2));
   }, [elements]);
-
-  const pickBackgroundImage = useCallback(async () => {
-    try {
-      // Request media library permissions
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert(
-          'Permission Required', 
-          'Sorry, we need camera roll permissions to set a background image.'
-        );
-        return;
-      }
-
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [16, 9],
-        quality: 1,
-        base64: false,
-        // Add file size limit (e.g., 15MB)
-        maxFileSize: 15 * 1024 * 1024, 
-      });
-
-      if (!result.canceled && result.assets && result.assets.length > 0) {
-        const imageAsset = result.assets[0];
-        
-        // Validate image dimensions
-        if (imageAsset.width > 4096 || imageAsset.height > 4096) {
-          Alert.alert(
-            'Image Too Large', 
-            'Background image is too large. Maximum dimensions are 4096x4096 pixels.'
-          );
-          return;
-        }
-
-        // Use Alert for confirmation
-        Alert.alert(
-          'Set Background',
-          'Do you want to set this image as the background?',
-          [
-            {
-              text: 'Cancel',
-              style: 'cancel'
-            },
-            {
-              text: 'Set Background',
-              onPress: () => {
-                setBackgroundImage({
-                  uri: imageAsset.uri,
-                  width: imageAsset.width,
-                  height: imageAsset.height,
-                  originalWidth: imageAsset.width,
-                  originalHeight: imageAsset.height
-                });
-              }
-            }
-          ]
-        );
-      }
-    } catch (error) {
-      console.error('Error picking background image:', error);
-      Alert.alert(
-        'Error', 
-        'Failed to set background image. Please try again.'
-      );
-    }
-  }, []);
 
   const handleElementDrag = useCallback((elementId, newPosition) => {
     updateElement(elementId, {
@@ -369,9 +368,9 @@ const EditorScreen = () => {
           <View style={styles.canvasWrapper}>
             <Canvas style={styles.canvas}>
               <Fill color="white" />
-              {backgroundImageObj && (
+              {processedBackgroundImage && (
                 <Image
-                  image={backgroundImageObj}
+                  image={processedBackgroundImage}
                   x={0}
                   y={0}
                   width={CANVAS_WIDTH}

@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, Alert } from 'react-native';
-import { Surface, IconButton, Menu } from 'react-native-paper';
+import { Surface, IconButton, Menu, Divider } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import { useEditorStore } from '../../store';
 
@@ -68,16 +68,11 @@ const EditorHeader = ({
             <Menu.Item
               key={index}
               title={`${element.type} ${index + 1}`}
-              right={() => (
-                <IconButton
-                  icon="delete"
-                  size={20}
-                  onPress={() => {
-                    onRemoveElement(index);
-                    setHeaderMenuVisible(false);
-                  }}
-                />
-              )}
+              onPress={() => {
+                onRemoveElement(index);
+                setHeaderMenuVisible(false);
+              }}
+              trailingIcon="delete"
             />
           ))}
         </Menu>
