@@ -14,7 +14,32 @@ import {
   Labrada_400Regular_Italic, Labrada_500Medium_Italic, Labrada_600SemiBold_Italic, 
   Labrada_700Bold_Italic, Labrada_800ExtraBold_Italic, Labrada_900Black_Italic,
   ShantellSans_300Light, ShantellSans_400Regular, ShantellSans_500Medium, 
-  ShantellSans_600SemiBold, ShantellSans_700Bold, ShantellSans_800ExtraBold
+  ShantellSans_600SemiBold, ShantellSans_700Bold, ShantellSans_800ExtraBold,
+  ShantellSans_300Light_Italic, ShantellSans_400Regular_Italic, 
+  ShantellSans_500Medium_Italic, ShantellSans_600SemiBold_Italic, 
+  ShantellSans_700Bold_Italic, ShantellSans_800ExtraBold_Italic,
+  Gloock_400Regular,
+  Mynerve_400Regular,
+  Solitreo_400Regular,
+  PadyakkeExpandedOne_400Regular,
+  MartianMono_100Thin, MartianMono_200ExtraLight, MartianMono_300Light, 
+  MartianMono_400Regular, MartianMono_500Medium, MartianMono_600SemiBold, 
+  MartianMono_700Bold, MartianMono_800ExtraBold,
+  Rubik80sFade_400Regular,
+  RubikGemstones_400Regular,
+  RubikSprayPaint_400Regular,
+  RubikStorm_400Regular,
+  RubikVinyl_400Regular,
+  SofiaSansCondensed_100Thin, SofiaSansCondensed_200ExtraLight, 
+  SofiaSansCondensed_300Light, SofiaSansCondensed_400Regular, 
+  SofiaSansCondensed_500Medium, SofiaSansCondensed_600SemiBold, 
+  SofiaSansCondensed_700Bold, SofiaSansCondensed_800ExtraBold, 
+  SofiaSansCondensed_900Black,
+  SofiaSansCondensed_100Thin_Italic, SofiaSansCondensed_200ExtraLight_Italic, 
+  SofiaSansCondensed_300Light_Italic, SofiaSansCondensed_400Regular_Italic, 
+  SofiaSansCondensed_500Medium_Italic, SofiaSansCondensed_600SemiBold_Italic, 
+  SofiaSansCondensed_700Bold_Italic, SofiaSansCondensed_800ExtraBold_Italic, 
+  SofiaSansCondensed_900Black_Italic
 } from '@expo-google-fonts/dev';
 
 export const FONT_MAP = {
@@ -38,6 +63,10 @@ export const FONT_MAP = {
   'Phudu_800ExtraBold': Phudu_800ExtraBold,
   'Phudu_900Black': Phudu_900Black,
   'GajrajOne_400Regular': GajrajOne_400Regular,
+  'Gloock_400Regular': Gloock_400Regular,
+  'Mynerve_400Regular': Mynerve_400Regular,
+  'Solitreo_400Regular': Solitreo_400Regular,
+  'PadyakkeExpandedOne_400Regular': PadyakkeExpandedOne_400Regular,
   'Labrada_100Thin': Labrada_100Thin,
   'Labrada_200ExtraLight': Labrada_200ExtraLight,
   'Labrada_300Light': Labrada_300Light,
@@ -61,7 +90,44 @@ export const FONT_MAP = {
   'ShantellSans_500Medium': ShantellSans_500Medium,
   'ShantellSans_600SemiBold': ShantellSans_600SemiBold,
   'ShantellSans_700Bold': ShantellSans_700Bold,
-  'ShantellSans_800ExtraBold': ShantellSans_800ExtraBold
+  'ShantellSans_800ExtraBold': ShantellSans_800ExtraBold,
+  'ShantellSans_300Light_Italic': ShantellSans_300Light_Italic,
+  'ShantellSans_400Regular_Italic': ShantellSans_400Regular_Italic,
+  'ShantellSans_500Medium_Italic': ShantellSans_500Medium_Italic,
+  'ShantellSans_600SemiBold_Italic': ShantellSans_600SemiBold_Italic,
+  'ShantellSans_700Bold_Italic': ShantellSans_700Bold_Italic,
+  'ShantellSans_800ExtraBold_Italic': ShantellSans_800ExtraBold_Italic,
+  'MartianMono_100Thin': MartianMono_100Thin,
+  'MartianMono_200ExtraLight': MartianMono_200ExtraLight,
+  'MartianMono_300Light': MartianMono_300Light,
+  'MartianMono_400Regular': MartianMono_400Regular,
+  'MartianMono_500Medium': MartianMono_500Medium,
+  'MartianMono_600SemiBold': MartianMono_600SemiBold,
+  'MartianMono_700Bold': MartianMono_700Bold,
+  'MartianMono_800ExtraBold': MartianMono_800ExtraBold,
+  'Rubik80sFade_400Regular': Rubik80sFade_400Regular,
+  'RubikGemstones_400Regular': RubikGemstones_400Regular,
+  'RubikSprayPaint_400Regular': RubikSprayPaint_400Regular,
+  'RubikStorm_400Regular': RubikStorm_400Regular,
+  'RubikVinyl_400Regular': RubikVinyl_400Regular,
+  'SofiaSansCondensed_100Thin': SofiaSansCondensed_100Thin,
+  'SofiaSansCondensed_200ExtraLight': SofiaSansCondensed_200ExtraLight,
+  'SofiaSansCondensed_300Light': SofiaSansCondensed_300Light,
+  'SofiaSansCondensed_400Regular': SofiaSansCondensed_400Regular,
+  'SofiaSansCondensed_500Medium': SofiaSansCondensed_500Medium,
+  'SofiaSansCondensed_600SemiBold': SofiaSansCondensed_600SemiBold,
+  'SofiaSansCondensed_700Bold': SofiaSansCondensed_700Bold,
+  'SofiaSansCondensed_800ExtraBold': SofiaSansCondensed_800ExtraBold,
+  'SofiaSansCondensed_900Black': SofiaSansCondensed_900Black,
+  'SofiaSansCondensed_100Thin_Italic': SofiaSansCondensed_100Thin_Italic,
+  'SofiaSansCondensed_200ExtraLight_Italic': SofiaSansCondensed_200ExtraLight_Italic,
+  'SofiaSansCondensed_300Light_Italic': SofiaSansCondensed_300Light_Italic,
+  'SofiaSansCondensed_400Regular_Italic': SofiaSansCondensed_400Regular_Italic,
+  'SofiaSansCondensed_500Medium_Italic': SofiaSansCondensed_500Medium_Italic,
+  'SofiaSansCondensed_600SemiBold_Italic': SofiaSansCondensed_600SemiBold_Italic,
+  'SofiaSansCondensed_700Bold_Italic': SofiaSansCondensed_700Bold_Italic,
+  'SofiaSansCondensed_800ExtraBold_Italic': SofiaSansCondensed_800ExtraBold_Italic,
+  'SofiaSansCondensed_900Black_Italic': SofiaSansCondensed_900Black_Italic
 };
 
 export const FONT_CONFIG = {
@@ -128,6 +194,34 @@ export const FONT_CONFIG = {
     weights: [400],
     styles: ['normal']
   },
+  Gloock: {
+    name: 'Gloock',
+    regular: 'Gloock_400Regular',
+    category: 'serif',
+    weights: [400],
+    styles: ['normal']
+  },
+  Mynerve: {
+    name: 'Mynerve',
+    regular: 'Mynerve_400Regular',
+    category: 'handwriting',
+    weights: [400],
+    styles: ['normal']
+  },
+  Solitreo: {
+    name: 'Solitreo',
+    regular: 'Solitreo_400Regular',
+    category: 'handwriting',
+    weights: [400],
+    styles: ['normal']
+  },
+  PadyakkeExpandedOne: {
+    name: 'Padyakke Expanded One',
+    regular: 'PadyakkeExpandedOne_400Regular',
+    category: 'display',
+    weights: [400],
+    styles: ['normal']
+  },
   Labrada: {
     name: 'Labrada',
     regular: 'Labrada_400Regular',
@@ -142,7 +236,58 @@ export const FONT_CONFIG = {
     bold: 'ShantellSans_700Bold',
     category: 'handwriting',
     weights: [300, 400, 500, 600, 700, 800],
+    styles: ['normal', 'italic']
+  },
+  MartianMono: {
+    name: 'Martian Mono',
+    regular: 'MartianMono_400Regular',
+    bold: 'MartianMono_700Bold',
+    category: 'monospace',
+    weights: [100, 200, 300, 400, 500, 600, 700, 800],
     styles: ['normal']
+  },
+  Rubik80sFade: {
+    name: 'Rubik 80s Fade',
+    regular: 'Rubik80sFade_400Regular',
+    category: 'display',
+    weights: [400],
+    styles: ['normal']
+  },
+  RubikGemstones: {
+    name: 'Rubik Gemstones',
+    regular: 'RubikGemstones_400Regular',
+    category: 'display',
+    weights: [400],
+    styles: ['normal']
+  },
+  RubikSprayPaint: {
+    name: 'Rubik Spray Paint',
+    regular: 'RubikSprayPaint_400Regular',
+    category: 'display',
+    weights: [400],
+    styles: ['normal']
+  },
+  RubikStorm: {
+    name: 'Rubik Storm',
+    regular: 'RubikStorm_400Regular',
+    category: 'display',
+    weights: [400],
+    styles: ['normal']
+  },
+  RubikVinyl: {
+    name: 'Rubik Vinyl',
+    regular: 'RubikVinyl_400Regular',
+    category: 'display',
+    weights: [400],
+    styles: ['normal']
+  },
+  SofiaSansCondensed: {
+    name: 'Sofia Sans Condensed',
+    regular: 'SofiaSansCondensed_400Regular',
+    bold: 'SofiaSansCondensed_700Bold',
+    category: 'sans-serif',
+    weights: [100, 200, 300, 400, 500, 600, 700, 800, 900],
+    styles: ['normal', 'italic']
   }
 };
 
@@ -166,9 +311,10 @@ export const getFontPairings = () => {
     headings: ['Montserrat', 'Inter'],
     body: ['Open Sans', 'Roboto'],
     accent: ['Nunito', 'Lato'],
-    display: ['Phudu', 'GajrajOne'],
-    serif: ['Labrada'],
-    handwriting: ['ShantellSans']
+    display: ['Phudu', 'GajrajOne', 'PadyakkeExpandedOne', 'Rubik80sFade', 'RubikGemstones', 'RubikSprayPaint', 'RubikStorm', 'RubikVinyl'],
+    serif: ['Labrada', 'Gloock'],
+    handwriting: ['ShantellSans', 'Mynerve', 'Solitreo'],
+    monospace: ['MartianMono']
   };
 };
 

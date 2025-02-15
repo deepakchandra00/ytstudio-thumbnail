@@ -8,7 +8,10 @@ import {
   Text, 
   IconButton, 
   Button,
-  Menu
+  Menu,
+  Modal,
+  Portal,
+  TextInput
 } from 'react-native-paper';
 import WheelColorPicker from 'react-native-wheel-color-picker';
 
@@ -79,6 +82,8 @@ const TextFormatterWidget = ({
     effects: selectedElement.effects || [],
     textAlign: selectedElement.textAlign || 'left'
   });
+  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+  const [editableText, setEditableText] = useState(selectedElement.content || '');
 
   // Update text style and notify parent
   const handleStyleChange = (newStyleProps) => {
@@ -105,7 +110,8 @@ const TextFormatterWidget = ({
         fontWeight: updatedStyle.effects.includes('Bold') ? 'bold' : 'normal',
         textAlign: updatedStyle.textAlign,
         textDecorationLine: textDecorationLine,
-        effects: updatedStyle.effects // Keep full effects array
+        effects: updatedStyle.effects, // Keep full effects array
+        content: newStyleProps.content || selectedElement.content // Ensure content is always included
       };
 
       console.log('Update payload:', updatePayload);
@@ -174,6 +180,18 @@ const TextFormatterWidget = ({
     handleStyleChange({ fontSize: newFontSize });
   };
 
+  // Add new method to handle edit modal
+  const openEditModal = () => {
+    setEditableText(selectedElement.content || '');
+    setIsEditModalVisible(true);
+  };
+
+  const saveEditedText = () => {
+    // Update text content
+    handleStyleChange({ content: editableText });
+    setIsEditModalVisible(false);
+  };
+
   return (
     <View style={styles.container}>
       <ScrollView 
@@ -181,96 +199,107 @@ const TextFormatterWidget = ({
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.scrollContainer}
       >
-        {/* Text Effects Buttons */}
-        <View style={styles.sectionContainer}>
-          {TEXT_EFFECTS.map((effect) => (
-            <IconButton
-              key={effect.name}
-              icon={effect.icon}
-              color={textStyle.effects.includes(effect.name) 
-                ? Colors.accent 
-                : Colors.grey500}
-              size={20}
-              onPress={() => toggleEffect(effect.name)}
-              style={[
-                styles.iconButton,
-                textStyle.effects.includes(effect.name) && styles.activeIconButton
-              ]}
-            />
-          ))}
-        </View>
-
-        {/* Text Alignment Buttons */}
-        <View style={styles.sectionContainer}>
-          {TEXT_ALIGNMENTS.map((alignment) => (
-            <IconButton
-              key={alignment.name}
-              icon={alignment.icon}
-              color={textStyle.textAlign === alignment.name.toLowerCase() 
-                ? Colors.accent 
-                : Colors.grey500}
-              size={20}
-              onPress={() => handleAlignmentChange(alignment.name.toLowerCase())}
-              style={[
-                styles.iconButton,
-                textStyle.textAlign === alignment.name.toLowerCase() && styles.activeIconButton
-              ]}
-            />
-          ))}
-        </View>
-
-        {/* Font Family Selection with Menu */}
-        <View style={styles.sectionContainer}>
-          <Menu
-            visible={isFontMenuVisible}
-            onDismiss={() => setFontMenuVisible(false)}
-            anchor={
-              <Button 
-                onPress={() => setFontMenuVisible(true)}
-                style={styles.fontMenuButton}
-              >
-                {textStyle.fontFamily.replace('_400Regular', '')}
-              </Button>
-            }
-          >
-            {FONT_FAMILIES.map((font) => (
-              <Menu.Item
-                key={font}
-                onPress={() => {
-                  handleFontChange(font);
-                  setFontMenuVisible(false);
-                }}
-                title={font}
-                style={
-                  textStyle.fontFamily.startsWith(font) 
-                    ? styles.selectedFontMenuItem 
-                    : {}
-                }
-              />
-            ))}
-          </Menu>
-        </View>
-
-        {/* Color and Size */}
+        {/* Add Edit Icon */}
         <View style={styles.sectionContainer}>
           <IconButton
-            icon="palette"
-            color={textStyle.color}
-            onPress={toggleColorPicker}
-            style={styles.colorButton}
+            icon="pencil"
+            color={Colors.blue500}
+            size={20}
+            onPress={openEditModal}
+            style={styles.iconButton}
           />
-          <View style={styles.fontSizeControls}>
+
+          {/* Text Effects Buttons */}
+          <View style={styles.sectionContainer}>
+            {TEXT_EFFECTS.map((effect) => (
+              <IconButton
+                key={effect.name}
+                icon={effect.icon}
+                color={textStyle.effects.includes(effect.name) 
+                  ? Colors.accent 
+                  : Colors.grey500}
+                size={20}
+                onPress={() => toggleEffect(effect.name)}
+                style={[
+                  styles.iconButton,
+                  textStyle.effects.includes(effect.name) && styles.activeIconButton
+                ]}
+              />
+            ))}
+          </View>
+
+          {/* Text Alignment Buttons */}
+          <View style={styles.sectionContainer}>
+            {TEXT_ALIGNMENTS.map((alignment) => (
+              <IconButton
+                key={alignment.name}
+                icon={alignment.icon}
+                color={textStyle.textAlign === alignment.name.toLowerCase() 
+                  ? Colors.accent 
+                  : Colors.grey500}
+                size={20}
+                onPress={() => handleAlignmentChange(alignment.name.toLowerCase())}
+                style={[
+                  styles.iconButton,
+                  textStyle.textAlign === alignment.name.toLowerCase() && styles.activeIconButton
+                ]}
+              />
+            ))}
+          </View>
+
+          {/* Font Family Selection with Menu */}
+          <View style={styles.sectionContainer}>
+            <Menu
+              visible={isFontMenuVisible}
+              onDismiss={() => setFontMenuVisible(false)}
+              anchor={
+                <Button 
+                  onPress={() => setFontMenuVisible(true)}
+                  style={styles.fontMenuButton}
+                >
+                  {textStyle.fontFamily.replace('_400Regular', '')}
+                </Button>
+              }
+            >
+              {FONT_FAMILIES.map((font) => (
+                <Menu.Item
+                  key={font}
+                  onPress={() => {
+                    handleFontChange(font);
+                    setFontMenuVisible(false);
+                  }}
+                  title={font}
+                  style={
+                    textStyle.fontFamily.startsWith(font) 
+                      ? styles.selectedFontMenuItem 
+                      : {}
+                  }
+                />
+              ))}
+            </Menu>
+          </View>
+
+          {/* Color and Size */}
+          <View style={styles.sectionContainer}>
             <IconButton
-              icon="minus"
-              size={16}
-              onPress={() => handleFontSizeChange(false)}
+              icon="palette"
+              color={textStyle.color}
+              onPress={toggleColorPicker}
+              style={styles.colorButton}
             />
-            <Text style={styles.fontSizeText}>{textStyle.fontSize}</Text>
-            <IconButton
-              icon="plus"
-              size={16}
-              onPress={() => handleFontSizeChange(true)}
-            />
+            <View style={styles.fontSizeControls}>
+              <IconButton
+                icon="minus"
+                size={16}
+                onPress={() => handleFontSizeChange(false)}
+              />
+              <Text style={styles.fontSizeText}>{textStyle.fontSize}</Text>
+              <IconButton
+                icon="plus"
+                size={16}
+                onPress={() => handleFontSizeChange(true)}
+              />
+            </View>
           </View>
         </View>
       </ScrollView>
@@ -296,6 +325,30 @@ const TextFormatterWidget = ({
           </Button>
         </View>
       )}
+
+      {/* Edit Modal */}
+      <Portal>
+        <Modal 
+          visible={isEditModalVisible} 
+          onDismiss={() => setIsEditModalVisible(false)}
+          contentContainerStyle={styles.modalContainer}
+        >
+          <TextInput
+            label="Edit Text"
+            value={editableText}
+            onChangeText={setEditableText}
+            multiline
+            style={styles.editTextInput}
+          />
+          <Button 
+            mode="contained" 
+            onPress={saveEditedText}
+            style={styles.saveButton}
+          >
+            Save
+          </Button>
+        </Modal>
+      </Portal>
     </View>
   );
 };
@@ -371,6 +424,19 @@ const styles = StyleSheet.create({
   colorPickerCloseButton: {
     marginTop: 10,
   },
+  modalContainer: {
+    backgroundColor: 'white', 
+    padding: 20, 
+    margin: 20, 
+    borderRadius: 10
+  },
+  editTextInput: {
+    marginBottom: 15,
+    minHeight: 100
+  },
+  saveButton: {
+    marginTop: 10
+  }
 });
 
 export default TextFormatterWidget;
