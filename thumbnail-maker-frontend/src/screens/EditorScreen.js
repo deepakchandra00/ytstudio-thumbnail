@@ -192,7 +192,7 @@ const EditorScreen = () => {
 
   const addText = useCallback(() => {
     if (textInput.trim()) {
-      addElement({
+      const newTextElement = {
         type: 'text',
         content: textInput,
         position: { x: 50, y: 50 },
@@ -202,11 +202,29 @@ const EditorScreen = () => {
         fontStyle: selectedFontStyle,
         alignment: selectedAlignment,
         zIndex: elements.length,
-      });
+      };
+
+      console.log('Adding new text element:', newTextElement);
+      addElement(newTextElement);
+      
+      // Reset text input and close modal
       setTextInput('');
       setTextModalVisible(false);
     }
-  }, [textInput, selectedSize, selectedColor, selectedFont, selectedFontStyle, selectedAlignment, addElement, elements.length]);
+  }, [
+    textInput, 
+    selectedFont, 
+    selectedSize, 
+    selectedColor, 
+    selectedFontStyle, 
+    selectedAlignment, 
+    elements.length, 
+    addElement
+  ]);
+
+  const logCurrentElements = useCallback(() => {
+    console.log('Current Elements:', JSON.stringify(elements, null, 2));
+  }, [elements]);
 
   const pickBackgroundImage = useCallback(async () => {
     try {
@@ -275,22 +293,22 @@ const EditorScreen = () => {
     }
   }, []);
 
-  const handleElementDrag = useCallback((index, newPosition) => {
-    updateElement(index, {
-      ...elements[index],
+  const handleElementDrag = useCallback((elementId, newPosition) => {
+    updateElement(elementId, {
+      ...elements.find((element) => element.id === elementId),
       position: newPosition
     });
   }, [elements, updateElement]);
 
-  const handleElementSelect = useCallback((index) => {
-    console.log('Selecting element:', index);
-    setSelectedElementId(index);
+  const handleElementSelect = useCallback((elementId) => {
+    console.log('Selecting element:', elementId);
+    setSelectedElementId(elementId);
   }, []);
 
   const handleUpdateTextStyle = (elementId, newStyle) => {
     // Update the specific text element's style
     updateElement(elementId, {
-      ...elements[elementId],
+      ...elements.find((element) => element.id === elementId),
       ...newStyle
     });
   };
@@ -358,15 +376,20 @@ const EditorScreen = () => {
             </Canvas>
 
             {elements.map((element, index) => {
+              // Add a unique ID if not already present
+              if (!element.id) {
+                element.id = `element_${index}_${Date.now()}`;
+              }
+
               if (element.type === 'text') {
                 return (
                   <TextElement
-                    key={index}
+                    key={element.id}
                     element={element}
-                    isSelected={selectedElementId === index}
-                    onSelect={() => setSelectedElementId(index)}
-                    onDrag={(newPosition) => handleElementDrag(index, newPosition)}
-                    onRotate={(newRotation) => handleElementRotate(index, newRotation)}
+                    isSelected={selectedElementId === element.id}
+                    onSelect={() => handleElementSelect(element.id)}
+                    onDrag={(newPosition) => handleElementDrag(element.id, newPosition)}
+                    onRotate={(newRotation) => handleElementRotate(element.id, newRotation)}
                     isDragging={isDragging}
                     setIsDragging={setIsDragging}
                     onUpdateTextStyle={handleUpdateTextStyle}
@@ -375,18 +398,18 @@ const EditorScreen = () => {
               } else if (element.type === 'image') {
                 return (
                   <ImageElement
-                    key={`image-${index}`}
+                    key={element.id}
                     element={element}
-                    isSelected={selectedElementId === index}
-                    onSelect={() => handleElementSelect(index)}
+                    isSelected={selectedElementId === element.id}
+                    onSelect={() => handleElementSelect(element.id)}
                     onDrag={(newPosition) => {
-                      updateElement(index, {
+                      updateElement(element.id, {
                         ...element,
                         position: newPosition
                       });
                     }}
                     onResize={(newDimensions) => {
-                      updateElement(index, {
+                      updateElement(element.id, {
                         ...element,
                         width: newDimensions.width,
                         height: newDimensions.height

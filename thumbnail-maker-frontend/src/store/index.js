@@ -251,11 +251,26 @@ export const useEditorStore = create((set, get) => ({
       return newState;
     }),
     
-  updateElement: (index, updates) =>
+  updateElement: (elementId, updates) =>
     set((state) => {
-      const updatedElements = state.elements.map((el, i) =>
-        i === index ? { ...el, ...updates } : el
+      console.log('Updating element:', elementId, updates);
+      const updatedElements = state.elements.map((el) =>
+        el.id === elementId ? { ...el, ...updates } : el
       );
+      console.log('Updated elements:', updatedElements);
+      return {
+        elements: updatedElements,
+        history: {
+          past: [...state.history.past, state.elements],
+          present: updatedElements,
+          future: []
+        }
+      };
+    }),
+
+  removeElement: (elementId) =>
+    set((state) => {
+      const updatedElements = state.elements.filter((el) => el.id !== elementId);
       return {
         elements: updatedElements,
         history: {
