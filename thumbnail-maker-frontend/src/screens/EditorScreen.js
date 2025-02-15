@@ -2,6 +2,8 @@ import React, { useState, useCallback, useRef, useMemo, useEffect } from 'react'
 import { View, StyleSheet, Dimensions, Platform, TouchableWithoutFeedback, Alert } from 'react-native';
 import { IconButton, Surface, Portal, Modal, TextInput, Button, Menu } from 'react-native-paper';
 import * as ImagePicker from 'expo-image-picker/src/ImagePicker';
+import StickerEditorWidget from '../components/editor/StickerEditorWidget';
+
 import {
   Canvas,
   Image,
@@ -59,6 +61,10 @@ const DUMMY_BACKGROUND_IMAGE = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA
 const EditorScreen = () => {
   const route = useRoute();
   const { template } = route.params || {};
+
+  const handleUpdateStickerSize = (elementId, updates) => {
+    updateElement(elementId, updates);
+  };
 
   // Refs
   const canvasRef = useRef(null);
@@ -425,6 +431,13 @@ const EditorScreen = () => {
           </View>
         </View>
 
+        {selectedElement && selectedElement.type === 'sticker' && (
+        <StickerEditorWidget 
+          selectedElement={selectedElement} 
+          onUpdateStickerSize={handleUpdateStickerSize} 
+        />
+      )}
+
         <EditorToolbar
           onAddImage={pickImage}
           onAddText={() => setTextModalVisible(true)}
@@ -551,6 +564,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#007AFF',
     borderStyle: 'dashed',
+  },
+  editorWidgetContainer: {
+    position: 'absolute',
+    bottom: 80,  
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    zIndex: 10,
   },
 });
 
