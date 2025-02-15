@@ -18,7 +18,14 @@ const TextElement = ({
   setIsDragging,
   onUpdateTextStyle 
 }) => {
-  console.log('TextElement props:', { element, isSelected, isDragging });
+  console.log('TextElement props:', { 
+    element, 
+    isSelected, 
+    isDragging,
+    color: element.color,
+    size: element.size,
+    content: element.content
+  });
 
   // Add a shared value for rotation
   const rotation = useSharedValue(0);
@@ -58,6 +65,7 @@ const TextElement = ({
   console.log('Font loading attempt:', {
     fontFamily,
     size: element.size,
+    color: element.color,
     loaded: !!font
   });
 
