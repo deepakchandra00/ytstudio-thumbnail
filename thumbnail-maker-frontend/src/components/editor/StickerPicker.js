@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   View,
-  Modal,
   StyleSheet,
   ActivityIndicator,
   Dimensions,
@@ -9,17 +8,9 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
-  Keyboard,
   TextInput,
 } from 'react-native';
-import { IconButton, Surface, Title } from 'react-native-paper';
-import { Canvas, Image, useImage } from "@shopify/react-native-skia";
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import Animated, { 
-  useSharedValue, 
-  useAnimatedStyle,
-  runOnJS
-} from 'react-native-reanimated';
+import { IconButton, Surface, Title, Portal, Modal } from 'react-native-paper';
 import getEnvVars from '../../config/constants';
 import ImageElement from './ImageElement';
 
@@ -36,8 +27,8 @@ const StickerItem = React.memo(({ sticker, onPress }) => {
           type: 'image',
           uri: `${STICKER_BASE_URL}${sticker}`,
           position: { x: 0, y: 0 },
-          width: Dimensions.get('window').width / 3 - 32,
-          height: Dimensions.get('window').width / 3 - 32,
+          width: Dimensions.get('window').width / 6 - 32,
+          height: Dimensions.get('window').width / 6 - 32,
         }}
         isPreview={true}
         containerStyle={styles.stickerImage}
@@ -60,26 +51,6 @@ const StickerPicker = ({ visible, onClose, onSelectSticker }) => {
     }
   }, [visible]);
 
-  useEffect(() => {
-    const keyboardDidShowListener = Keyboard.addListener(
-      'keyboardDidShow',
-      () => {
-        // Optional: Add any keyboard show handling
-      }
-    );
-    const keyboardDidHideListener = Keyboard.addListener(
-      'keyboardDidHide',
-      () => {
-        // Optional: Add any keyboard hide handling
-      }
-    );
-
-    return () => {
-      keyboardDidShowListener.remove();
-      keyboardDidHideListener.remove();
-    };
-  }, []);
-
   const fetchStickers = async () => {
     try {
       setLoading(true);
@@ -101,7 +72,7 @@ const StickerPicker = ({ visible, onClose, onSelectSticker }) => {
       setStickers(stickerList);
     } catch (error) {
       console.error('Fetch error:', error);
-      setError(error.message);
+      setError('Failed to load stickers. Please try again later.');
     } finally {
       setLoading(false);
     }
@@ -114,119 +85,117 @@ const StickerPicker = ({ visible, onClose, onSelectSticker }) => {
   }, [stickers, searchQuery]);
 
   return (
-    <Modal 
-      visible={visible} 
-      animationType="slide" 
-      transparent 
-      onRequestClose={onClose}
-      statusBarTranslucent
-    >
-      <KeyboardAvoidingView 
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.modalOverlay}
+    <Portal>
+      <Modal 
+        visible={visible} 
+        onDismiss={onClose}
+        contentContainerStyle={styles.modalContainer}
       >
-        <TouchableOpacity 
-          style={styles.modalOverlay} 
-          activeOpacity={1} 
-          onPress={onClose}
+        <KeyboardAvoidingView 
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.modalOverlay}
         >
           <TouchableOpacity 
+            style={styles.modalOverlay} 
             activeOpacity={1} 
-            onPress={Keyboard.dismiss}
+            onPress={onClose}
           >
-            <Surface style={styles.container}>
-              {/* Header */}
-              <View style={styles.header}>
-                <Title style={styles.headerTitle}>Stickers</Title>
-                <TouchableOpacity 
-                  onPress={onClose} 
-                  style={styles.closeButton}
-                >
-                  <IconButton icon="close" size={20} />
-                </TouchableOpacity>
-              </View>
-
-              {/* Search Bar */}
-              <View style={styles.searchContainer}>
-                <IconButton icon="magnify" size={18} style={styles.searchIcon} color="#666" />
-                <TextInput
-                  style={styles.searchInput}
-                  placeholder="Search stickers..."
-                  value={searchQuery}
-                  onChangeText={setSearchQuery}
-                  placeholderTextColor="#999"
-                />
-                {searchQuery.length > 0 && (
-                  <TouchableOpacity onPress={() => setSearchQuery('')}>
-                    <IconButton icon="close-circle" size={16} color="#666" />
-                  </TouchableOpacity>
-                )}
-              </View>
-
-              {/* Loading & Error States */}
-              {loading ? (
-                <View style={styles.centerContent}>
-                  <ActivityIndicator size="small" color="#666" />
-                  <Text style={styles.loadingText}>Loading stickers...</Text>
-                </View>
-              ) : error ? (
-                <View style={styles.centerContent}>
-                  <Text style={styles.errorText}>{error}</Text>
+            <TouchableOpacity 
+              activeOpacity={1} 
+            >
+              <Surface style={styles.container}>
+                {/* Header */}
+                <View style={styles.header}>
+                  <Title style={styles.headerTitle}>Stickers</Title>
                   <TouchableOpacity 
-                    style={styles.retryButton} 
-                    onPress={fetchStickers}
+                    onPress={onClose} 
+                    style={styles.closeButton}
                   >
-                    <Text style={styles.retryText}>Retry</Text>
+                    <IconButton icon="close" size={20} />
                   </TouchableOpacity>
                 </View>
-              ) : (
-                <View style={styles.stickersGrid}>
-                  {filteredStickers.map((sticker, index) => (
-                    <StickerItem 
-                      key={index}
-                      sticker={sticker}
-                      onPress={() => {
-                        const stickerElement = { 
-                          type: 'image',
-                          uri: `${STICKER_BASE_URL}${sticker}`,
-                          position: {
-                            x: Dimensions.get('window').width / 2 - 75,
-                            y: Dimensions.get('window').height / 2 - 75,
-                          },
-                          width: 150,
-                          height: 150,
-                          rotation: 0,
-                          scale: 1,
-                          zIndex: Date.now(),
-                          originalWidth: 150,
-                          originalHeight: 150,
-                          id: `sticker-${Date.now()}`,
-                          isSelected: true,
-                        };
-                        onSelectSticker(stickerElement);
-                        onClose();
-                      }}
-                    />
-                  ))}
-                  {filteredStickers.length === 0 && (
-                    <View style={styles.noResultsContainer}>
-                      <IconButton icon="sticker-remove" size={48} />
-                      <Text style={styles.noResultsText}>
-                        {searchQuery ? 'No stickers found' : 'No stickers available'}
-                      </Text>
-                    </View>
+
+                {/* Search Bar */}
+                <View style={styles.searchContainer}>
+                  <IconButton icon="magnify" size={18} style={styles.searchIcon} color="#666" />
+                  <TextInput
+                    style={styles.searchInput}
+                    placeholder="Search stickers..."
+                    value={searchQuery}
+                    onChangeText={setSearchQuery}
+                    placeholderTextColor="#999"
+                  />
+                  {searchQuery.length > 0 && (
+                    <TouchableOpacity onPress={() => setSearchQuery('')}>
+                      <IconButton icon="close-circle" size={16} color="#666" />
+                    </TouchableOpacity>
                   )}
                 </View>
-              )}
-            </Surface>
+
+                {/* Loading & Error States */}
+                {loading ? (
+                  <View style={styles.centerContent}>
+                    <ActivityIndicator size="small" color="#666" />
+                    <Text style={styles.loadingText}>Loading stickers...</Text>
+                  </View>
+                ) : error ? (
+                  <View style={styles.centerContent}>
+                    <Text style={styles.errorText}>{error}</Text>
+                  </View>
+                ) : (
+                  <View style={styles.stickersGrid}>
+                    {filteredStickers.map((sticker, index) => (
+                      <StickerItem 
+                        key={index}
+                        sticker={sticker}
+                        onPress={() => {
+                          const stickerElement = { 
+                            type: 'image',
+                            uri: `${STICKER_BASE_URL}${sticker}`,
+                            position: {
+                              x: Dimensions.get('window').width / 2 - 75,
+                              y: Dimensions.get('window').height / 2 - 75,
+                            },
+                            width: 50,
+                            height: 50,
+                            rotation: 0,
+                            scale: 1,
+                            zIndex: Date.now(),
+                            originalWidth: 50,
+                            originalHeight: 50,
+                            id: `sticker-${Date.now()}`,
+                            isSelected: true,
+                          };
+                          onSelectSticker(stickerElement);
+                          onClose();
+                        }}
+                      />
+                    ))}
+                    {filteredStickers.length === 0 && (
+                      <View style={styles.noResultsContainer}>
+                        <IconButton icon="sticker-remove" size={48} />
+                        <Text style={styles.noResultsText}>
+                          {searchQuery ? 'No stickers found' : 'No stickers available'}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                )}
+              </Surface>
+            </TouchableOpacity>
           </TouchableOpacity>
-        </TouchableOpacity>
-      </KeyboardAvoidingView>
-    </Modal>
+        </KeyboardAvoidingView>
+      </Modal>
+    </Portal>
   );
 };
 
 const styles = StyleSheet.create({
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    margin: 0,
+  },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.4)',
@@ -290,8 +259,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   stickerButton: {
-    width: Dimensions.get('window').width / 3 - 24,
-    height: Dimensions.get('window').width / 3 - 24,
+    width: Dimensions.get('window').width / 6 - 10,
+    height: Dimensions.get('window').width / 6 - 10,
     margin: 6,
     borderRadius: 16,
     backgroundColor: '#f8f8f8',
@@ -323,17 +292,6 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     textAlign: 'center',
     fontSize: 14,
-  },
-  retryButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    backgroundColor: '#f0f0f0',
-    borderRadius: 8,
-  },
-  retryText: {
-    color: '#666',
-    fontSize: 14,
-    fontWeight: '500',
   },
   noResultsContainer: {
     width: '100%',

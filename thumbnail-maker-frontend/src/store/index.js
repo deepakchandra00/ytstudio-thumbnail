@@ -268,9 +268,11 @@ export const useEditorStore = create((set, get) => ({
       };
     }),
 
-  removeElement: (elementId) =>
+  removeElement: (index) =>
     set((state) => {
-      const updatedElements = state.elements.filter((el) => el.id !== elementId);
+      console.log('Removing element at index:', index);
+      const updatedElements = state.elements.filter((_, elIndex) => elIndex !== index);
+      console.log('Updated elements:', updatedElements);
       return {
         elements: updatedElements,
         history: {
