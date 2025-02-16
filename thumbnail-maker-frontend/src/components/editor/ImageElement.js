@@ -116,18 +116,9 @@ const ImageElement = ({
     };
   });
 
-  // Skip rendering if image is not loaded
   if (!image) {
-    return (
-      <View style={{ 
-        width: element.width, 
-        height: element.height, 
-        justifyContent: 'center', 
-        alignItems: 'center' 
-      }}>
-        <ActivityIndicator size="large" color="#0000ff" />
-      </View>
-    );
+    console.log('Failed to load image for element:', element);
+    return null;
   }
 
   return (
@@ -141,8 +132,8 @@ const ImageElement = ({
         >
           <Image
             image={image}
-            x={0}
-            y={0}
+            x={element.position.x}
+            y={element.position.y}
             width={element.width}
             height={element.height}
             fit="contain"

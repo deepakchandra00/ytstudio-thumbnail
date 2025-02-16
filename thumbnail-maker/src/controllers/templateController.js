@@ -76,25 +76,28 @@ const templateController = {
   // Update template
   async update(req, res) {
     try {
-      const updates = req.body;
-      
-      if (req.file) {
-        updates.imageUrl = req.file ? `/uploads/${req.file.filename}` : null;
-      }
-
-      const template = await Template.findOneAndUpdate(
-        { _id: req.params.id, creator: req.user._id },
-        updates,
-        { new: true }
+      const template = await Template.findByIdAndUpdate(
+        req.params.id,
+        { 
+          ...req.body,
+          elements: req.body.elements.map(el => ({
+            ...el,
+            position: el.position?.x ? el.position : { x: 0, y: 0 }
+          }))
+        },
+        { new: true, runValidators: true }
       );
-
+      
       if (!template) {
-        return res.status(404).json({ error: 'Template not found' });
+        return res.status(404).json({ message: 'Template not found' });
       }
-
       res.json(template);
     } catch (error) {
-      res.status(500).json({ error: 'Error updating template' });
+      console.error('Update error:', error);
+      res.status(400).json({ 
+        message: error.message,
+        details: error.errors 
+      });
     }
   },
 

@@ -14,7 +14,7 @@ import {
   matchFont,
   Group,
 } from "@shopify/react-native-skia";
-import { useEditorStore } from '../store';
+import { useEditorStore, useTemplateStore } from '../store';
 import Animated, { 
   useSharedValue, 
   useAnimatedStyle,
@@ -71,6 +71,9 @@ const EditorScreen = () => {
 
   // Store
   const { elements, addElement, updateElement, removeElement, history, undo, redo, setElements } = useEditorStore();
+  const { saveTemplate } = useTemplateStore.getState();
+
+  console.log('Elements:', elements);
 
   // Background image handling
   const [backgroundImage, setBackgroundImage] = useState(DUMMY_BACKGROUND_IMAGE);
@@ -352,9 +355,32 @@ const EditorScreen = () => {
     loadDefaultTemplate();
   };
 
-  const handleAdminSave = () => {
-    Alert.alert('Save', 'Design saved successfully!');
-    // You might want to call a function to save the current design state
+  const handleAdminSave = async () => {
+    try {
+      // Validate all image elements have URIs
+      const hasInvalidImages = elements.some(el => 
+        el.type === 'image' && !el.uri
+      );
+      
+      if (hasInvalidImages) {
+        throw new Error('All image elements must have a valid URL');
+      }
+
+      const templateToSave = {
+        _id: template?._id,
+        name: template?.name || 'Artistic Expression',
+        category: template?.category || 'Art',
+        elements: elements,
+        backgroundImage: backgroundImage,
+      };
+      
+      console.log('Saving template:', templateToSave);
+      await saveTemplate(templateToSave);
+      Alert.alert('Success', 'Template saved successfully!');
+    } catch (error) {
+      console.error('Save error details:', error);
+      Alert.alert('Save Failed', error.message);
+    }
   };
 
   return (
@@ -388,6 +414,7 @@ const EditorScreen = () => {
             </Canvas>
 
             {elements.map((element, index) => {
+              console.log('Rendering element:', JSON.stringify(element, null, 2));
               // Add a unique ID if not already present
               if (!element.id) {
                 element.id = `element_${index}_${Date.now()}`;

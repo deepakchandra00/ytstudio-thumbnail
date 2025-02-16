@@ -2,7 +2,7 @@ import React from 'react';
 import { View, StyleSheet, Alert } from 'react-native';
 import { Surface, IconButton, Menu, Divider } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
-import { useEditorStore } from '../../store';
+import { useEditorStore, useTemplateStore } from '../../store';
 
 const EditorHeader = ({
   onPickBackground,
@@ -15,6 +15,7 @@ const EditorHeader = ({
 }) => {
   const navigation = useNavigation();
   const { history } = useEditorStore();
+  const { loading } = useTemplateStore();
 
   const handleBack = () => {
     // Check if there are unsaved changes
@@ -82,11 +83,15 @@ const EditorHeader = ({
         {/* Add conditional rendering for admin save button */}
         {showAdminSave && (
           <IconButton
-            icon="content-save"
+            icon={loading ? "loading" : "content-save"}
             size={24}
-            onPress={onAdminSave}
+            onPress={() => {
+              setHeaderMenuVisible(false);
+              onAdminSave();
+            }}
             style={styles.adminSaveButton}
-            accessibilityLabel="Save Design"
+            disabled={loading}
+            accessibilityLabel={loading ? "Saving..." : "Save Design"}
           />
         )}
       </View>

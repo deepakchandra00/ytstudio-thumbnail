@@ -6,6 +6,10 @@ const elementSchema = new mongoose.Schema({
     enum: ['image', 'text'],
     required: true
   },
+  uri: {
+    type: String,
+    required: function() { return this.type === 'image'; },
+  },
   content: String, // For text elements
   position: {
     x: { type: Number, required: true },
@@ -44,6 +48,10 @@ const elementSchema = new mongoose.Schema({
   rotation: {
     type: Number,
     default: 0
+  },
+  id: {
+    type: String,
+    required: true
   }
 });
 
