@@ -352,6 +352,11 @@ const EditorScreen = () => {
     loadDefaultTemplate();
   };
 
+  const handleAdminSave = () => {
+    Alert.alert('Save', 'Design saved successfully!');
+    // You might want to call a function to save the current design state
+  };
+
   return (
     <TouchableWithoutFeedback onPress={handleDeselectElement}>
       <View style={styles.container}>
@@ -362,6 +367,8 @@ const EditorScreen = () => {
           onRemoveElement={removeElement}
           headerMenuVisible={headerMenuVisible}
           setHeaderMenuVisible={setHeaderMenuVisible}
+          showAdminSave={true}
+          onAdminSave={handleAdminSave}
           resetToDefaultTemplate={resetToDefaultTemplate}
         />
         <View style={styles.canvasContainer}>

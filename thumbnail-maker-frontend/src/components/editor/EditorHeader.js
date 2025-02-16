@@ -10,6 +10,8 @@ const EditorHeader = ({
   onRemoveElement,
   headerMenuVisible,
   setHeaderMenuVisible,
+  onAdminSave,
+  showAdminSave,
 }) => {
   const navigation = useNavigation();
   const { history } = useEditorStore();
@@ -76,6 +78,17 @@ const EditorHeader = ({
             />
           ))}
         </Menu>
+        
+        {/* Add conditional rendering for admin save button */}
+        {showAdminSave && (
+          <IconButton
+            icon="content-save"
+            size={24}
+            onPress={onAdminSave}
+            style={styles.adminSaveButton}
+            accessibilityLabel="Save Design"
+          />
+        )}
       </View>
     </Surface>
   );
@@ -98,6 +111,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
+  adminSaveButton: {
+    backgroundColor: 'green', // Optional: style the admin save button
+    marginRight: 10,
+  }
 });
 
 export default EditorHeader;

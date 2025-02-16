@@ -37,7 +37,7 @@ export const useAuth = create((set) => ({
       }
 
       set({
-        user: data.user,
+        user: { ...data.user, role: data.user.role || 'user' },  // Explicitly set role, defaulting to 'user'
         isAuthenticated: true,
         error: null,
       });
@@ -76,7 +76,7 @@ export const useAuth = create((set) => ({
       }
 
       set({
-        user: data.user,
+        user: { ...data.user, role: data.user.role || 'user' },  // Explicitly set role, defaulting to 'user'
         isAuthenticated: true,
         error: null,
       });
@@ -122,7 +122,7 @@ export const useAuth = create((set) => ({
       }
 
       set({
-        user: data.user,
+        user: { ...data.user, role: data.user.role || 'user' },  // Explicitly set role, defaulting to 'user'
         isAuthenticated: true,
         error: null,
       });
@@ -313,7 +313,7 @@ export const useEditorStore = create((set, get) => ({
         future: newFuture
       }
     };
-  })
+  }),
 }));
 
 // Remove or comment out the Redux-related code since we're using Zustand

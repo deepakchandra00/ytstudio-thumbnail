@@ -7,15 +7,26 @@ const templateController = {
   // Create new template
   async create(req, res) {
     try {
-      if (!req.file) {
-        return res.status(400).json({ error: 'Please upload an image' });
-      }
-
       const templateData = {
         ...req.body,
         creator: req.user._id,
-        imageUrl: req.file ? `/uploads/${req.file.filename}` : null
+        // If no image is uploaded, use the backgroundImage from the request body
+        backgroundImage: req.body.backgroundImage || (req.file ? `/uploads/${req.file.filename}` : null)
       };
+
+      // Validate required fields
+      if (!templateData.name) {
+        return res.status(400).json({ error: 'Template name is required' });
+      }
+
+      if (!templateData.category) {
+        return res.status(400).json({ error: 'Template category is required' });
+      }
+
+      // Ensure elements are properly formatted
+      if (templateData.elements && !Array.isArray(templateData.elements)) {
+        return res.status(400).json({ error: 'Elements must be an array' });
+      }
 
       const template = new Template(templateData);
       await template.save();
@@ -23,7 +34,7 @@ const templateController = {
       res.status(201).json(template);
     } catch (error) {
       console.error('Template Creation Error:', error);
-      res.status(500).json({ error: 'Error creating template' });
+      res.status(500).json({ error: 'Error creating template', details: error.message });
     }
   },
 
@@ -84,6 +95,47 @@ const templateController = {
       res.json(template);
     } catch (error) {
       res.status(500).json({ error: 'Error updating template' });
+    }
+  },
+
+  // Update template with full template data
+  async updateFullTemplate(req, res) {
+    try {
+      const { id } = req.params;
+      const templateData = req.body;
+
+      // Validate required fields
+      if (!templateData.name) {
+        return res.status(400).json({ error: 'Template name is required' });
+      }
+
+      if (!templateData.category) {
+        return res.status(400).json({ error: 'Template category is required' });
+      }
+
+      // Ensure elements are properly formatted
+      if (templateData.elements && !Array.isArray(templateData.elements)) {
+        return res.status(400).json({ error: 'Elements must be an array' });
+      }
+
+      // Find and update the template
+      const template = await Template.findOneAndUpdate(
+        { _id: id, creator: req.user._id }, 
+        templateData, 
+        { 
+          new: true,  // Return the updated document
+          runValidators: true  // Run model validation on update
+        }
+      );
+
+      if (!template) {
+        return res.status(404).json({ error: 'Template not found or unauthorized' });
+      }
+
+      res.json(template);
+    } catch (error) {
+      console.error('Update template error:', error);
+      res.status(500).json({ error: 'Error updating template', details: error.message });
     }
   },
 
