@@ -3,15 +3,21 @@ import { View, StyleSheet, ScrollView, KeyboardAvoidingView, Platform } from 're
 import { TextInput, Button, Text, Surface, Portal, Modal, Divider } from 'react-native-paper';
 import { useAuth } from '../store';
 
+// const DEFAULT_CREDENTIALS = {
+//   email: "deepak@example.com",
+//   password: "deepak@123",
+// };
 const DEFAULT_CREDENTIALS = {
-  email: "deepak@example.com",
-  password: "deepak@123",
+  email: "admin@example.com",
+password: "admin123",
 };
 
 const AuthScreen = ({ navigation }) => {
   const [isLogin, setIsLogin] = useState(true);
-  const [email, setEmail] = useState('deepak@example.com');
-  const [password, setPassword] = useState('deepak@123');
+  // const [email, setEmail] = useState('deepak@example.com');
+  // const [password, setPassword] = useState('deepak@123');
+  const [email, setEmail] = useState(DEFAULT_CREDENTIALS.email);
+  const [password, setPassword] = useState(DEFAULT_CREDENTIALS.password);
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');

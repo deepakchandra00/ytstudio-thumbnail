@@ -52,7 +52,7 @@ router.post('/register', async (req, res) => {
       });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);  // ✅ Fixed async hashing
+    const hashedPassword = await bcrypt.hash(password, 10);  // Fixed async hashing
 
     const user = await User.create({
       name,
@@ -109,6 +109,27 @@ router.post('/register', async (req, res) => {
  *     responses:
  *       200:
  *         description: Login successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 token:
+ *                   type: string
+ *                 user:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                     email:
+ *                       type: string
+ *                     name:
+ *                       type: string
+ *                     role:
+ *                       type: string
+ *                       enum: ['user', 'admin']
  *       401:
  *         description: Invalid credentials
  */
@@ -127,6 +148,7 @@ router.post('/login', async (req, res) => {
     }
 
     console.log('Login debug:', {
+      user,
       email,
       providedPassword:  password,
       storeid:user.email,
@@ -134,7 +156,7 @@ router.post('/login', async (req, res) => {
     });
 
     // Use async compare for better reliability
-    const isMatch = await bcrypt.compare(password, user.password);  // ✅ Use async compare
+    const isMatch = await bcrypt.compare(password, user.password);  // Use async compare
     console.log('Password match:', isMatch);
 
     if (!isMatch) {
@@ -156,7 +178,8 @@ router.post('/login', async (req, res) => {
       user: {
         id: user._id,
         name: user.name,
-        email: user.email
+        email: user.email,
+        role: user.role
       }
     });
 
@@ -230,7 +253,7 @@ router.post('/create-test-user', async (req, res) => {
     await User.deleteOne({ email: 'test@example.com' });
 
     // Create new test user with known credentials
-    const hashedPassword = await bcrypt.hash('test123', 10);  // ✅ Ensure async hashing
+    const hashedPassword = await bcrypt.hash('test123', 10);  // Ensure async hashing
     const user = await User.create({
       name: 'Test User',
       email: 'test@example.com',

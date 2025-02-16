@@ -80,7 +80,7 @@ router.post('/login', async (req, res) => {
       loginAttempts: 0
     });
 
-    return res.status(200).json({
+    return res.status(200).json(console.log(user),{
       success: true,
       token,
       user: {
