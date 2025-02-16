@@ -212,7 +212,7 @@ console.log('Saving template...2', template);
         if (!response.ok) {
           throw new Error(data.message || 'Failed to fetch templates');
         }
-
+console.log('Data:', Array.isArray(data));
         set({
           templates: Array.isArray(data) ? data : [],
           error: null,

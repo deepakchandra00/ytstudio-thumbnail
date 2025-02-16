@@ -73,6 +73,8 @@ const EditorScreen = () => {
   const { elements, addElement, updateElement, removeElement, history, undo, redo, setElements } = useEditorStore();
   const { saveTemplate } = useTemplateStore.getState();
 
+  console.log('Elements:', elements);
+
   // Background image handling
   const [backgroundImage, setBackgroundImage] = useState(DUMMY_BACKGROUND_IMAGE);
   const [backgroundImageObj, setBackgroundImageObj] = useState(null);
@@ -355,15 +357,20 @@ const EditorScreen = () => {
 
   const handleAdminSave = async () => {
     try {
+      // Validate all image elements have URIs
+      const hasInvalidImages = elements.some(el => 
+        el.type === 'image' && !el.uri
+      );
+      
+      if (hasInvalidImages) {
+        throw new Error('All image elements must have a valid URL');
+      }
+
       const templateToSave = {
         _id: template?._id,
         name: template?.name || 'Artistic Expression',
         category: template?.category || 'Art',
-        elements: elements.map(el => ({
-          ...el,
-          // Ensure position is properly structured
-          position: el.position?.x ? el.position : { x: 0, y: 0 }
-        })),
+        elements: elements,
         backgroundImage: backgroundImage,
       };
       
@@ -407,6 +414,7 @@ const EditorScreen = () => {
             </Canvas>
 
             {elements.map((element, index) => {
+              console.log('Rendering element:', JSON.stringify(element, null, 2));
               // Add a unique ID if not already present
               if (!element.id) {
                 element.id = `element_${index}_${Date.now()}`;

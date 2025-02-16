@@ -80,10 +80,8 @@ const templateController = {
         req.params.id,
         { 
           ...req.body,
-          // Ensure elements are properly handled
           elements: req.body.elements.map(el => ({
             ...el,
-            // Convert position if needed
             position: el.position?.x ? el.position : { x: 0, y: 0 }
           }))
         },
