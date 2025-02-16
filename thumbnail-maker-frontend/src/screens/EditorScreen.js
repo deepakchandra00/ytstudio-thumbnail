@@ -14,7 +14,7 @@ import {
   matchFont,
   Group,
 } from "@shopify/react-native-skia";
-import { useEditorStore } from '../store';
+import { useEditorStore, useTemplateStore } from '../store';
 import Animated, { 
   useSharedValue, 
   useAnimatedStyle,
@@ -71,6 +71,7 @@ const EditorScreen = () => {
 
   // Store
   const { elements, addElement, updateElement, removeElement, history, undo, redo, setElements } = useEditorStore();
+  const { saveTemplate } = useTemplateStore.getState();
 
   // Background image handling
   const [backgroundImage, setBackgroundImage] = useState(DUMMY_BACKGROUND_IMAGE);
@@ -352,9 +353,27 @@ const EditorScreen = () => {
     loadDefaultTemplate();
   };
 
-  const handleAdminSave = () => {
-    Alert.alert('Save', 'Design saved successfully!');
-    // You might want to call a function to save the current design state
+  const handleAdminSave = async () => {
+    try {
+      const templateToSave = {
+        _id: template?._id,
+        name: template?.name || 'Artistic Expression',
+        category: template?.category || 'Art',
+        elements: elements.map(el => ({
+          ...el,
+          // Ensure position is properly structured
+          position: el.position?.x ? el.position : { x: 0, y: 0 }
+        })),
+        backgroundImage: backgroundImage,
+      };
+      
+      console.log('Saving template:', templateToSave);
+      await saveTemplate(templateToSave);
+      Alert.alert('Success', 'Template saved successfully!');
+    } catch (error) {
+      console.error('Save error details:', error);
+      Alert.alert('Save Failed', error.message);
+    }
   };
 
   return (

@@ -44,6 +44,10 @@ const elementSchema = new mongoose.Schema({
   rotation: {
     type: Number,
     default: 0
+  },
+  id: {
+    type: String,
+    required: true
   }
 });
 

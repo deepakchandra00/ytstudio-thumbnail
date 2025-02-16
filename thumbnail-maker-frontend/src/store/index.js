@@ -146,6 +146,47 @@ export const useTemplateStore = create((set) => ({
   loading: false,
   error: null,
 
+  saveTemplate: async (template) => {
+    set({ loading: true, error: null });
+    try {
+      const token = await AsyncStorage.getItem('authToken');
+      const user = useAuth.getState().user;
+      
+      if (user?.role !== 'admin') {
+        throw new Error('Unauthorized - Admin access required');
+      }
+console.log('Saving template...2', template);
+      const response = await fetch(`${apiUrl}/templates/${template._id}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(template),
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to save template');
+      }
+
+      set(state => ({
+        templates: state.templates.map(t => 
+          t._id === template._id ? { ...t, ...data } : t
+        )
+      }));
+      
+      return data;
+    } catch (error) {
+      console.error('Template save error:', error);
+      set({ error: error.message });
+      throw error;
+    } finally {
+      set({ loading: false });
+    }
+  },
+
   fetchTemplates: async () => {
     set({ loading: true, error: null });
     try {
@@ -187,37 +228,6 @@ export const useTemplateStore = create((set) => ({
         error: error.message,
         templates: []
       });
-    } finally {
-      set({ loading: false });
-    }
-  },
-
-  saveTemplate: async (template) => {
-    set({ loading: true });
-    try {
-      const token = await AsyncStorage.getItem('authToken');
-      const response = await fetch(`${apiUrl}/templates`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(template),
-      });
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to save template');
-      }
-
-      set((state) => ({
-        templates: [...state.templates, data],
-        error: null,
-      }));
-      return data;
-    } catch (error) {
-      set({ error: error.message });
-      throw error;
     } finally {
       set({ loading: false });
     }
