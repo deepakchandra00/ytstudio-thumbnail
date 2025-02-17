@@ -155,14 +155,32 @@ export const useTemplateStore = create((set) => ({
       if (user?.role !== 'admin') {
         throw new Error('Unauthorized - Admin access required');
       }
-console.log('Saving template...2', template);
+console.log('Loading template:', template);
+      // Process template elements to ensure image elements have necessary properties
+      const processedTemplate = {
+        ...template,
+        elements: (template.elements || []).map(element => {
+          if (element.type === 'image') {
+            return {
+              ...element,
+              width: element.width || element.size || 100,
+              height: element.height || element.size || 100,
+              rotation: element.rotation || 0
+            };
+          }
+          return element;
+        })
+      };
+
+      console.log('Saving processed template:', processedTemplate);
+
       const response = await fetch(`${apiUrl}/templates/${template._id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(template),
+        body: JSON.stringify(processedTemplate),
       });
 
       const data = await response.json();
@@ -261,22 +279,21 @@ export const useEditorStore = create((set, get) => ({
       return newState;
     }),
     
-  updateElement: (elementId, updates) =>
+  updateElement: (elementId, updates) => {
     set((state) => {
-      console.log('Updating element:', elementId, updates);
-      const updatedElements = state.elements.map((el) =>
-        el.id === elementId ? { ...el, ...updates } : el
-      );
-      console.log('Updated elements:', updatedElements);
-      return {
-        elements: updatedElements,
-        history: {
-          past: [...state.history.past, state.elements],
-          present: updatedElements,
-          future: []
+      const updatedElements = state.elements.map((element) => {
+        if (element.id === elementId) {
+          // Ensure rotation is a number, not an object
+          const finalUpdates = updates.rotation 
+            ? { ...updates, rotation: updates.rotation.rotation || updates.rotation }
+            : updates;
+          return { ...element, ...finalUpdates };
         }
-      };
-    }),
+        return element;
+      });
+      return { elements: updatedElements };
+    });
+  },
 
   removeElement: (index) =>
     set((state) => {

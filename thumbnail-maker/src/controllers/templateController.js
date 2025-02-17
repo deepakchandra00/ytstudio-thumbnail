@@ -121,6 +121,22 @@ const templateController = {
         return res.status(400).json({ error: 'Elements must be an array' });
       }
 
+      // Process elements to ensure image elements have width and height
+      const processedElements = (templateData.elements || []).map(element => {
+        if (element.type === 'image') {
+          return {
+            ...element,
+            width: element.width || element.size || 100,
+            height: element.height || element.size || 100,
+            rotation: element.rotation || 0
+          };
+        }
+        return element;
+      });
+
+      // Replace elements with processed elements
+      templateData.elements = processedElements;
+
       // Find and update the template
       const template = await Template.findOneAndUpdate(
         { _id: id, creator: req.user._id }, 

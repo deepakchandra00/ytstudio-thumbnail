@@ -15,6 +15,15 @@ const elementSchema = new mongoose.Schema({
     x: { type: Number, required: true },
     y: { type: Number, required: true }
   },
+  // Add width and height for image elements
+  width: {
+    type: Number,
+    default: function() { return this.type === 'image' ? 100 : undefined; }
+  },
+  height: {
+    type: Number,
+    default: function() { return this.type === 'image' ? 100 : undefined; }
+  },
   font: {
     type: String,
     default: 'serif'

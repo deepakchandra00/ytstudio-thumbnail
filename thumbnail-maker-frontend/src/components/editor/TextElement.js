@@ -122,10 +122,10 @@ const TextElement = ({
         { translateY: position.value.y },
         { rotate: `${rotation.value}deg` }
       ],
-      width: element.size * element.content.length,
-      height: element.size * 1.2,
+      width:  element.size * element.content.length/2 + 10,
+      height: element.size * 1.2 + 10,
             // Add border when selected
-            borderWidth: isSelected ? 2 : 0,
+            borderWidth: isSelected ? 1 : 0,
             borderColor: isSelected ? 'blue' : 'transparent',
             padding: isSelected ? 5 : 0
     };

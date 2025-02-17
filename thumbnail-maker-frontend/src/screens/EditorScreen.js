@@ -148,8 +148,21 @@ const EditorScreen = () => {
   // Load template on initial render
   useEffect(() => {
     if (template) {
-      // Reset elements to template elements
-      setElements(template.elements || []);
+      // Add default width and height for image elements
+      const processedElements = (template.elements || []).map(element => {
+        if (element.type === 'image' && (!element.width || !element.height)) {
+          return {
+            ...element,
+            width: element.size || 100,  // Use size or default to 100
+            height: element.size || 100,  // Use size or default to 100
+            rotation: element.rotation || 0
+          };
+        }
+        return element;
+      });
+      
+      // Reset elements to processed template elements
+      setElements(processedElements);
       
       // Set background image if template has one
       if (template.backgroundImage) {
@@ -328,6 +341,10 @@ const EditorScreen = () => {
     }
   }, [isDragging]);
 
+  const handleRotateElement = useCallback((elementId, newRotation) => {
+    updateElement(elementId, { rotation: newRotation });
+  }, [updateElement]);
+
   // Function to load default template
   const loadDefaultTemplate = useCallback(() => {
     // Clear existing elements
@@ -428,7 +445,7 @@ const EditorScreen = () => {
                     isSelected={selectedElementId === element.id}
                     onSelect={() => handleElementSelect(element.id)}
                     onDrag={(newPosition) => handleElementDrag(element.id, newPosition)}
-                    onRotate={(newRotation) => handleElementRotate(element.id, newRotation)}
+                    onRotate={(newRotation) => handleRotateElement(element.id, newRotation)}
                     isDragging={isDragging}
                     setIsDragging={setIsDragging}
                     onUpdateTextStyle={handleUpdateTextStyle}
@@ -454,6 +471,7 @@ const EditorScreen = () => {
                         height: newDimensions.height
                       });
                     }}
+                    onRotate={(newRotation) => handleRotateElement(element.id, newRotation)}
                     isDragging={isDragging}
                     setIsDragging={setIsDragging}
                   />
