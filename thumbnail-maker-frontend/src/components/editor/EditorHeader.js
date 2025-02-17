@@ -91,6 +91,7 @@ const EditorHeader = ({
             }}
             style={styles.adminSaveButton}
             disabled={loading}
+            mode="contained"
             accessibilityLabel={loading ? "Saving..." : "Save Design"}
           />
         )}
@@ -117,7 +118,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   adminSaveButton: {
-    backgroundColor: 'green', // Optional: style the admin save button
     marginRight: 10,
   }
 });

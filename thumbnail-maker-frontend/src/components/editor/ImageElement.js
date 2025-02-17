@@ -14,6 +14,7 @@ const ImageElement = ({
   onSelect, 
   onDrag,
   onResize,
+  onRotate,
   isDragging,
   setIsDragging 
 }) => {
@@ -24,7 +25,8 @@ const ImageElement = ({
     x: element.position.x,
     y: element.position.y
   });
-  const rotation = useSharedValue(0);
+  console.log('element rotation', element);
+  const rotation = useSharedValue(element.rotation || 0);
   const scale = useSharedValue(1);
 
   const handleDragEnd = useCallback((x, y) => {
@@ -46,7 +48,16 @@ const ImageElement = ({
   const rotationGesture = Gesture.Rotation()
     .onUpdate((event) => {
       // Convert radians to degrees
-      rotation.value = event.rotation * (180 / Math.PI);
+      const newRotation = event.rotation * (180 / Math.PI);
+      rotation.value = newRotation;
+    })
+    .onEnd(() => {
+      // Save the final rotation
+      if (onRotate) {
+        runOnJS(onRotate)({
+          rotation: rotation.value
+        });
+      }
     });
 
   // Pinch gesture for resizing
@@ -107,12 +118,12 @@ const ImageElement = ({
         { rotate: `${rotation.value}deg` },
         { scale: scale.value }
       ],
-      width: element.width,
-      height: element.height,
+      width: element.width + 20,
+      height: element.height + 20,
       // Add border when selected
-      borderWidth: isSelected ? 2 : 0,
+      borderWidth: isSelected ? 1 : 0,
       borderColor: isSelected ? 'blue' : 'transparent',
-      padding: isSelected ? 5 : 0
+      padding: isSelected ? 10 : 0
     };
   });
 
@@ -132,8 +143,8 @@ const ImageElement = ({
         >
           <Image
             image={image}
-            x={element.position.x}
-            y={element.position.y}
+            x={0}
+            y={0}
             width={element.width}
             height={element.height}
             fit="contain"
