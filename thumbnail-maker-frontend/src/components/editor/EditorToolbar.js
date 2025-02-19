@@ -1,58 +1,76 @@
 import React, { useState } from 'react';
-import { View, StyleSheet } from 'react-native';
-import { IconButton, Surface } from 'react-native-paper';
+import { View, StyleSheet, Alert } from 'react-native';
+import { IconButton, Surface, Tooltip } from 'react-native-paper';
 import StickerPicker from './StickerPicker';
 
-const EditorToolbar = ({ onAddImage, onAddText, onUndo, onRedo, canUndo, canRedo, onAddSticker, resetToDefaultTemplate }) => {
+const EditorToolbar = ({ 
+  onAddImage, 
+  onAddText, 
+  onUndo, 
+  onRedo, 
+  canUndo, 
+  canRedo, 
+  onAddSticker, 
+  onRemoveBackground,
+  canRemoveBackground,
+  removeBackground
+}) => {
   const [stickerPickerVisible, setStickerPickerVisible] = useState(false);
 
   const handleStickerSelect = (stickerElement) => {
     onAddSticker(stickerElement);
   };
-
+console.log('processing:', removeBackground)
   return (
-    <>
-      <Surface style={styles.toolbar}>
-        <View style={styles.toolbarSection}>
+    <Surface style={styles.toolbar}>
+      <View style={styles.toolbarSection}>
+        <IconButton
+          icon="image-plus"
+          mode="contained"
+          onPress={onAddImage}
+        />
+        <IconButton
+          icon="format-text"
+          mode="contained"
+          onPress={onAddText}
+        />
+        <IconButton
+          icon="sticker-emoji"
+          mode="contained"
+          onPress={() => setStickerPickerVisible(true)}
+        />
+        <Tooltip title="Remove Background">
           <IconButton
-            icon="image-plus"
+            icon="image-auto-adjust"
             mode="contained"
-            onPress={onAddImage}
+            onPress={onRemoveBackground}
+            disabled={!canRemoveBackground}
+            loading={removeBackground}
           />
-          <IconButton
-            icon="format-text"
-            mode="contained"
-            onPress={onAddText}
-          />
-          <IconButton
-            icon="sticker-emoji"
-            mode="contained"
-            onPress={() => setStickerPickerVisible(true)}
-          />
-        </View>
-        
-        <View style={styles.toolbarSection}>
-          <IconButton
-            icon="undo"
-            mode="contained"
-            onPress={onUndo}
-            disabled={!canUndo}
-          />
-          <IconButton
-            icon="redo"
-            mode="contained"
-            onPress={onRedo}
-            disabled={!canRedo}
-          />
-        </View>
-      </Surface>
+        </Tooltip>
+      </View>
+      
+      <View style={styles.toolbarSection}>
+        <IconButton
+          icon="undo"
+          mode="contained"
+          onPress={onUndo}
+          disabled={!canUndo}
+        />
+        <IconButton
+          icon="redo"
+          mode="contained"
+          onPress={onRedo}
+          disabled={!canRedo}
+        />
+      </View>
 
       <StickerPicker
         visible={stickerPickerVisible}
         onClose={() => setStickerPickerVisible(false)}
         onSelectSticker={handleStickerSelect}
       />
-    </>
+    </Surface>
   );
 };
 
@@ -69,4 +87,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default EditorToolbar; 
+export default EditorToolbar;

@@ -283,6 +283,7 @@ export const useEditorStore = create((set, get) => ({
     set((state) => {
       const updatedElements = state.elements.map((element) => {
         if (element.id === elementId) {
+          console.log('Updating element:', elementId, 'with', updates);
           // Ensure rotation is a number, not an object
           const finalUpdates = updates.rotation 
             ? { ...updates, rotation: updates.rotation.rotation || updates.rotation }

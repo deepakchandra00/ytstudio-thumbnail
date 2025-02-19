@@ -4,6 +4,7 @@ const ENV = {
   dev: {
     apiUrl: 'http://192.168.29.102:5000/api',
     authApiUrl: 'http://192.168.29.102:5000/api/auth',
+    PIXIAN_API_KEY: 'your_api_key_here',
     cloudinary: {
       cloudName: 'your_cloud_name',
       apiKey: 'your_api_key',
