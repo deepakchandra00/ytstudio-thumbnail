@@ -2,8 +2,6 @@ import React, { useState, useCallback, useRef, useMemo, useEffect } from 'react'
 import { View, StyleSheet, Dimensions, Platform, TouchableWithoutFeedback, Alert } from 'react-native';
 import { IconButton, Surface, Portal, Modal, TextInput, Button, Menu } from 'react-native-paper';
 import * as ImagePicker from 'expo-image-picker/src/ImagePicker';
-import StickerEditorWidget from '../components/editor/StickerEditorWidget';
-
 import {
   Canvas,
   Image,
@@ -28,6 +26,7 @@ import EditorToolbar from '../components/editor/EditorToolbar';
 import TextModal from '../components/editor/TextModal';
 import EditorHeader from '../components/editor/EditorHeader';
 import { CANVAS_WIDTH, CANVAS_HEIGHT, CANVAS_PADDING } from '../constants/editorConstants';
+import { removeBackground } from '../services/backgroundRemovalService';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const FONTS = Platform.select({ 
@@ -61,10 +60,6 @@ const DUMMY_BACKGROUND_IMAGE = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA
 const EditorScreen = () => {
   const route = useRoute();
   const { template } = route.params || {};
-
-  const handleUpdateStickerSize = (elementId, updates) => {
-    updateElement(elementId, updates);
-  };
 
   // Refs
   const canvasRef = useRef(null);
@@ -211,7 +206,8 @@ const EditorScreen = () => {
   const [showBackgroundRemoval, setShowBackgroundRemoval] = useState(false);
   const [selectedElementId, setSelectedElementId] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
-
+  const [processing, setProcessing] = useState(false);
+ 
   // Animated values
   const scale = useSharedValue(1);
   const rotation = useSharedValue(0);
@@ -259,7 +255,6 @@ const EditorScreen = () => {
           );
           return;
         }
-
         addElement({
           type: 'image',
           uri: selectedImage.uri,
@@ -400,6 +395,82 @@ const EditorScreen = () => {
     }
   };
 
+  const handleRemoveBackground = async () => {
+    // Find image elements
+    const selectedImageElement = selectedElementId ? elements.find(el => el.id === selectedElementId && el.type === 'image') : null;
+console.log('Selected Image Element:', selectedImageElement);
+    // If no image elements exist
+    if (!selectedImageElement) {
+      Alert.alert(
+        'No Images', 
+        'There are no images in the canvas to remove background from.'
+      );
+      return;
+    }
+
+    // If no specific image is selected, use the first image element
+    const elementToProcess = selectedImageElement || elements[0];
+
+    try {
+      // Show loading indicator
+      setProcessing(true);
+
+      // Remove background from the selected/first image
+      const processedImage = await removeBackground(elementToProcess.uri);
+      
+      // Verify the processed image
+      if (!processedImage) {
+        throw new Error('No processed image received');
+      }
+
+      // Update the elements array with the processed image
+      const updatedElements = elements.map(el => 
+        el.id === elementToProcess.id 
+          ? { 
+              ...el, 
+              uri: processedImage,
+              // Optionally reset or update other properties
+              width: el.width,
+              height: el.height
+            } 
+          : el
+      );
+
+      // Update the state with new elements and deselect current element
+      setElements(updatedElements);
+      setSelectedElement(null);
+
+      // Additional verification
+      console.log('Processed Image:', processedImage.substring(0, 100)); // Log first 100 chars
+
+      Alert.alert(
+        'Background Removed', 
+        'The background has been successfully removed.',
+        [{ 
+          text: 'OK', 
+          onPress: () => {
+            // Optional: Additional actions after successful background removal
+          } 
+        }]
+      );
+    } catch (error) {
+      console.error('Background Removal Error:', error);
+      Alert.alert(
+        'Background Removal Failed', 
+        error.message || 'Unable to remove background. Please try again.'
+      );
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  // Determine if background removal is possible
+  const canRemoveBackground = useMemo(() => {
+    // Check if there are any image elements in the canvas
+    const imageElements = elements.filter(el => el.type === 'image');
+    return imageElements.length > 0;
+  }, [elements]);
+
   return (
     <TouchableWithoutFeedback onPress={handleDeselectElement}>
       <View style={styles.container}>
@@ -482,13 +553,6 @@ const EditorScreen = () => {
           </View>
         </View>
 
-        {selectedElement && selectedElement.type === 'sticker' && (
-        <StickerEditorWidget 
-          selectedElement={selectedElement} 
-          onUpdateStickerSize={handleUpdateStickerSize} 
-        />
-      )}
-
         <EditorToolbar
           onAddImage={pickImage}
           onAddText={() => setTextModalVisible(true)}
@@ -502,7 +566,9 @@ const EditorScreen = () => {
           }}
           canUndo={history.past.length > 0}
           canRedo={history.future.length > 0}
-          resetToDefaultTemplate={resetToDefaultTemplate}
+          onRemoveBackground={handleRemoveBackground}
+          canRemoveBackground={canRemoveBackground}
+          removeBackground={processing}
         />
 
         <TextModal
@@ -623,6 +689,10 @@ const styles = StyleSheet.create({
     right: 0,
     alignItems: 'center',
     zIndex: 10,
+  },
+  image: {
+    width: 100,
+    height: 100,
   },
 });
 
