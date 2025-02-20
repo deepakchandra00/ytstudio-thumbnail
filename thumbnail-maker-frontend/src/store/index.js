@@ -342,6 +342,22 @@ export const useEditorStore = create((set, get) => ({
       }
     };
   }),
+
+  reorderElements: (fromIndex, toIndex) => 
+    set((state) => {
+      const updatedElements = [...state.elements];
+      const [removedElement] = updatedElements.splice(fromIndex, 1);
+      updatedElements.splice(toIndex, 0, removedElement);
+      
+      return {
+        elements: updatedElements,
+        history: {
+          past: [...state.history.past, state.elements],
+          present: updatedElements,
+          future: []
+        }
+      };
+    }),
 }));
 
 // Remove or comment out the Redux-related code since we're using Zustand

@@ -1,24 +1,131 @@
-import React from 'react';
-import { View, StyleSheet, Alert } from 'react-native';
-import { Surface, IconButton, Menu, Divider } from 'react-native-paper';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { View, Text, StyleSheet, Modal, Alert } from 'react-native';
+import { Surface, IconButton, Text as PaperText } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import { useEditorStore, useTemplateStore } from '../../store';
+import DraggableFlatList from 'react-native-draggable-flatlist';
+
+const LayerReorderModal = ({ 
+  visible, 
+  onClose, 
+  elements, 
+  onReorderElements,
+  onRemoveElement 
+}) => {
+  const [layers, setLayers] = useState([]);
+
+  const layersWithIds = useMemo(() => {
+    return elements.map((element, index) => ({
+      ...element,
+      id: `layer-${index}-${element.type}`,
+      displayName: `${element.type} Layer ${index + 1}`
+    }));
+  }, [elements]);
+
+  useEffect(() => {
+    if (visible && layersWithIds.length > 0) {
+      setLayers(layersWithIds);
+    }
+  }, [visible, layersWithIds]);
+
+  const renderItem = useCallback(({ 
+    item, 
+    drag, 
+    isActive 
+  }) => {
+    return (
+      <View 
+        style={[
+          styles.layerItem, 
+          isActive && styles.activeLayer
+        ]}
+      >
+        <View 
+          style={styles.layerContent} 
+          onTouchStart={drag}
+        >
+          <Text style={styles.layerText}>
+            {item.displayName || `${item.type} Layer`}
+          </Text>
+          <IconButton 
+            icon="delete" 
+            size={20} 
+            onPress={() => {
+              const index = layers.findIndex(l => l.id === item.id);
+              onRemoveElement(index);
+              const newLayers = layers.filter(l => l.id !== item.id);
+              setLayers(newLayers);
+            }} 
+          />
+        </View>
+      </View>
+    );
+  }, [layers, onRemoveElement]);
+
+  const handleDragEnd = useCallback(({ data }) => {
+    const reorderedElements = data.map(layer => {
+      const originalIndex = elements.findIndex(el => 
+        el.type === layer.type && 
+        JSON.stringify(el) === JSON.stringify(layer)
+      );
+      return originalIndex !== -1 ? elements[originalIndex] : layer;
+    });
+
+    onReorderElements(reorderedElements);
+  }, [elements, onReorderElements]);
+
+  if (!visible) return null;
+
+  return (
+    <Modal
+      animationType="slide"
+      transparent={true}
+      visible={visible}
+      onRequestClose={onClose}
+      hardwareAccelerated={true}
+    >
+      <View style={styles.modalContainer}>
+        <View style={styles.modalContent}>
+          <PaperText style={styles.modalTitle}>Reorder Layers</PaperText>
+          {layers.length === 0 ? (
+            <Text style={styles.emptyState}>No layers found</Text>
+          ) : (
+            <DraggableFlatList
+              data={layers}
+              keyExtractor={(item) => item.id}
+              renderItem={renderItem}
+              onDragEnd={handleDragEnd}
+              removeClippedSubviews={true}
+              maxToRenderPerBatch={10}
+              updateCellsBatchingPeriod={50}
+              initialNumToRender={5}
+              windowSize={21}
+            />
+          )}
+          <IconButton 
+            icon="close" 
+            style={styles.closeButton}
+            onPress={onClose} 
+          />
+        </View>
+      </View>
+    </Modal>
+  );
+};
 
 const EditorHeader = ({
   onPickBackground,
   elements,
   onRemoveElement,
-  headerMenuVisible,
-  setHeaderMenuVisible,
   onAdminSave,
   showAdminSave,
 }) => {
   const navigation = useNavigation();
-  const { history } = useEditorStore();
+  const { history, setElements } = useEditorStore();
   const { loading } = useTemplateStore();
+  const [layerModalVisible, setLayerModalVisible] = useState(false);
 
   const handleBack = () => {
-    // Check if there are unsaved changes
     if (history.length > 0) {
       Alert.alert(
         'Unsaved Changes',
@@ -40,6 +147,25 @@ const EditorHeader = ({
     }
   };
 
+  const handleReorderElements = (reorderedElements) => {
+    setElements(reorderedElements);
+  };
+
+  const openLayersModal = () => {
+    console.log('Attempting to open layers modal');
+    console.log('Current elements:', JSON.stringify(elements, null, 2));
+    
+    if (elements && elements.length > 0) {
+      setLayerModalVisible(true);
+    } else {
+      Alert.alert(
+        'No Layers',
+        'There are currently no layers to reorder.',
+        [{ text: 'OK' }]
+      );
+    }
+  };
+
   return (
     <Surface style={styles.header}>
       <View style={styles.headerLeft}>
@@ -56,37 +182,17 @@ const EditorHeader = ({
       </View>
       
       <View style={styles.headerRight}>
-        <Menu
-          visible={headerMenuVisible}
-          onDismiss={() => setHeaderMenuVisible(false)}
-          anchor={
-            <IconButton
-              icon="layers"
-              mode="contained"
-              onPress={() => setHeaderMenuVisible(true)}
-            />
-          }
-        >
-          {elements.map((element, index) => (
-            <Menu.Item
-              key={index}
-              title={`${element.type} ${index + 1}`}
-              onPress={() => {
-                onRemoveElement(index);
-                setHeaderMenuVisible(false);
-              }}
-              trailingIcon="delete"
-            />
-          ))}
-        </Menu>
+        <IconButton
+          icon="layers"
+          mode="contained"
+          onPress={openLayersModal}
+        />
         
-        {/* Add conditional rendering for admin save button */}
         {showAdminSave && (
           <IconButton
             icon={loading ? "loading" : "content-save"}
             size={24}
             onPress={() => {
-              setHeaderMenuVisible(false);
               onAdminSave();
             }}
             style={styles.adminSaveButton}
@@ -96,6 +202,17 @@ const EditorHeader = ({
           />
         )}
       </View>
+
+      <LayerReorderModal
+        visible={layerModalVisible}
+        onClose={() => {
+          console.log('Closing layers modal');
+          setLayerModalVisible(false);
+        }}
+        elements={elements}
+        onReorderElements={handleReorderElements}
+        onRemoveElement={onRemoveElement}
+      />
     </Surface>
   );
 };
@@ -119,6 +236,52 @@ const styles = StyleSheet.create({
   },
   adminSaveButton: {
     marginRight: 10,
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalContent: {
+    width: '90%',
+    backgroundColor: 'white',
+    borderRadius: 10,
+    padding: 20,
+    maxHeight: '70%',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  layerItem: {
+    backgroundColor: '#f0f0f0',
+    marginVertical: 5,
+    borderRadius: 8,
+    padding: 10,
+  },
+  activeLayer: {
+    backgroundColor: '#e0e0e0',
+  },
+  layerContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  layerText: {
+    fontSize: 16,
+    flex: 1,
+  },
+  closeButton: {
+    alignSelf: 'center',
+    marginTop: 10,
+  },
+  emptyState: {
+    textAlign: 'center',
+    color: 'gray',
+    marginVertical: 20,
   }
 });
 
