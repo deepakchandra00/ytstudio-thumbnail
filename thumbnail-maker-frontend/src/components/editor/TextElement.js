@@ -1,13 +1,14 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { 
   useSharedValue, 
   useAnimatedStyle,
   runOnJS
 } from 'react-native-reanimated';
-import { Text, matchFont, Canvas } from "@shopify/react-native-skia";
+import { Text, matchFont, Canvas, Path, Paint } from "@shopify/react-native-skia";
 import { View, Platform } from 'react-native';
 import TextFormatterWidget from './TextFormatterWidget';
+import { GoogleFontsManager } from '../../utils/fontUtils';
 
 const TextElement = ({ 
   element, 
@@ -18,14 +19,139 @@ const TextElement = ({
   setIsDragging,
   onUpdateTextStyle 
 }) => {
-  console.log('TextElement props:', { 
-    element, 
-    isSelected, 
-    isDragging,
-    color: element.color,
-    size: element.size,
-    content: element.content
+  const [font, setFont] = useState(null);
+  const [textColor, setTextColor] = useState(element.color || "#000000");
+  const [textEffects, setTextEffects] = useState(element.effects || []);
+  const [fontDetails, setFontDetails] = useState({
+    fontName: element.fontName || 'Inter',
+    fontWeight: element.fontWeight || 'normal',
+    fontStyle: element.fontStyle || 'normal',
+    textDecorationLine: element.textDecorationLine || 'none'
   });
+
+  console.log('Initial Element:', JSON.stringify(element, null, 2));
+
+  // Dynamic font loading
+  useEffect(() => {
+    const loadFont = async () => {
+      try {
+        // Determine font properties
+        const isBold = textEffects.includes('Bold') || element.fontWeight === 'bold';
+        const isItalic = textEffects.includes('Italic') || element.fontStyle === 'italic';
+        const fontName = element.fontName || 'Inter';
+
+        await GoogleFontsManager.loadGoogleFont(fontName);
+
+        const fontStyle = {
+          fontFamily: fontName,
+          fontSize: element.size || 16,
+          fontWeight: isBold ? 'bold' : 'normal',
+          fontStyle: isItalic ? 'italic' : 'normal'
+        };
+
+        const matchedFont = matchFont(fontStyle);
+        console.log('Matched Font Details:', {
+          fontName,
+          fontWeight: fontStyle.fontWeight,
+          fontStyle: fontStyle.fontStyle
+        });
+        
+        if (matchedFont) {
+          setFont(matchedFont);
+          setFontDetails(prev => ({
+            ...prev,
+            fontWeight: isBold ? 'bold' : 'normal',
+            fontStyle: isItalic ? 'italic' : 'normal'
+          }));
+        }
+      } catch (error) {
+        console.error('Font loading error:', error);
+      }
+    };
+
+    loadFont();
+  }, [
+    element.fontName, 
+    element.size, 
+    textEffects, 
+    element.fontWeight, 
+    element.fontStyle
+  ]);
+
+  // Determine text decoration based on effects
+  const getTextDecoration = useCallback(() => {
+    const hasUnderline = textEffects.includes('Underline') || element.textDecorationLine === 'underline';
+    const hasStrikethrough = textEffects.includes('Strikethrough') || element.textDecorationLine === 'line-through';
+
+    if (hasUnderline && hasStrikethrough) {
+      return 'underline line-through';
+    } else if (hasUnderline) {
+      return 'underline';
+    } else if (hasStrikethrough) {
+      return 'line-through';
+    }
+    return 'none';
+  }, [textEffects, element.textDecorationLine]);
+
+  // Render custom underline if needed
+  const renderUnderline = useCallback((textWidth, fontSize) => {
+    const hasUnderline = textEffects.includes('Underline') || element.textDecorationLine === 'underline';
+    
+    if (!hasUnderline) return null;
+
+    // Underline positioning slightly below the text baseline
+    const underlineY = fontSize + 2;
+    const underlinePath = `M0 ${underlineY} H${textWidth}`;
+
+    return (
+      <Path 
+        path={underlinePath}
+        style="stroke"
+        strokeWidth={1.5}
+        color={textColor}
+      />
+    );
+  }, [textEffects, element.textDecorationLine, textColor]);
+
+  // Handle text style update with comprehensive logging
+  const handleTextStyleUpdate = useCallback((elementId, newStyle) => {
+    console.group('TextElement Style Update');
+    console.log('Current Element:', element);
+    console.log('New Style:', newStyle);
+    
+    // Update color if provided
+    if (newStyle.color) {
+      setTextColor(newStyle.color);
+    }
+
+    // Update text effects
+    if (newStyle.effects) {
+      setTextEffects(newStyle.effects);
+    }
+
+    // Update font details
+    const updatedFontDetails = {
+      fontName: newStyle.fontName || fontDetails.fontName,
+      fontWeight: newStyle.fontWeight || 
+        (newStyle.effects?.includes('Bold') ? 'bold' : 'normal'),
+      fontStyle: newStyle.fontStyle || 
+        (newStyle.effects?.includes('Italic') ? 'italic' : 'normal'),
+      textDecorationLine: newStyle.textDecorationLine || 
+        getTextDecoration()
+    };
+    setFontDetails(updatedFontDetails);
+    
+    // Propagate style update to parent component
+    if (onUpdateTextStyle) {
+      onUpdateTextStyle(elementId, {
+        ...element,
+        ...newStyle,
+        ...updatedFontDetails
+      });
+    }
+    
+    console.groupEnd();
+  }, [element, fontDetails, getTextDecoration, onUpdateTextStyle]);
 
   // Add a shared value for rotation
   const rotation = useSharedValue(0);
@@ -35,45 +161,67 @@ const TextElement = ({
     y: element.position.y
   });
 
-    // Handle text style update
-    const handleTextStyleUpdate = useCallback((newStyle) => {
-      // Propagate style update to parent component
-      onUpdateTextStyle && onUpdateTextStyle(isSelected, newStyle);
-    }, [isSelected, onUpdateTextStyle]);
+  // Rotation gesture handler
+  const rotationGesture = Gesture.Rotation()
+  .onUpdate((event) => {
+    // Convert radians to degrees
+    rotation.value = event.rotation * (180 / Math.PI);
+  });
 
-    // Rotation gesture handler
-    const rotationGesture = Gesture.Rotation()
-    .onUpdate((event) => {
-      // Convert radians to degrees
-      rotation.value = event.rotation * (180 / Math.PI);
-    });
-
+  // Use worklet-compatible animated style
+  const animatedStyle = useAnimatedStyle(() => {
+    // More precise width calculation
+    const contentLength = element.content.length;
+    const fontSize = element.size;
     
-  // Use matchFont with system fonts
-  const fontFamily = Platform.select({ 
-    ios: "Helvetica", 
-    default: "sans-serif" 
-  });
+    // Sophisticated width estimation
+    const estimatedWidth = (() => {
+      // Character width varies by font, so use a more dynamic approach
+      // Different multipliers for different character types
+      const baseMultipliers = {
+        'normal': 0.55,   // Standard characters
+        'wide': 0.7,      // Wide characters like 'W', 'M'
+        'narrow': 0.4     // Narrow characters like 'I', 'l'
+      };
 
-  const fontStyle = {
-    fontFamily,
-    fontSize: element.size,
-    fontWeight: "normal"
-  };
+      // Calculate average character width
+      const averageCharWidth = fontSize * (
+        baseMultipliers.normal * 0.6 + 
+        baseMultipliers.wide * 0.2 + 
+        baseMultipliers.narrow * 0.2
+      );
 
-  const font = matchFont(fontStyle);
-  console.log('Font loading attempt:', {
-    fontFamily,
-    size: element.size,
-    color: element.color,
-    loaded: !!font
-  });
+      // Adjust for font weight and style
+      const weightMultiplier = fontDetails.fontWeight === 'bold' ? 1.1 : 1;
+      const styleMultiplier = fontDetails.fontStyle === 'italic' ? 1.05 : 1;
 
-  // Skip rendering if font is not loaded
-  if (!font) {
-    console.log('Font not loaded');
-    return null;
-  }
+      // Final width calculation with padding
+      return (averageCharWidth * contentLength * weightMultiplier * styleMultiplier) + 20;
+    })();
+
+    return {
+      position: 'absolute',
+      transform: [
+        { translateX: position.value.x },
+        { translateY: position.value.y },
+        { rotate: `${rotation.value}deg` }
+      ],
+      width: estimatedWidth,
+      height: fontSize * 1.5, // Slightly increased height
+      // Add border when selected
+      borderWidth: isSelected ? 1 : 0,
+      borderColor: isSelected ? 'blue' : 'transparent',
+      borderStyle: 'dashed'
+    };
+  }, [
+    position, 
+    rotation, 
+    isSelected, 
+    element.content, 
+    element.size,
+    fontDetails.fontWeight,
+    fontDetails.fontStyle
+  ]);
 
   const handleDragEnd = useCallback((x, y) => {
     if (onDrag) {
@@ -112,45 +260,46 @@ const TextElement = ({
     rotationGesture
   )
 
+  console.log('Rendering TextElement with font:', font);
 
-  // Use worklet-compatible animated style
-  const animatedStyle = useAnimatedStyle(() => {
-    return {
-      position: 'absolute',
-      transform: [
-        { translateX: position.value.x },
-        { translateY: position.value.y },
-        { rotate: `${rotation.value}deg` }
-      ],
-      width:  element.size * element.content.length/2 + 10,
-      height: element.size * 1.2 + 10,
-            // Add border when selected
-            borderWidth: isSelected ? 1 : 0,
-            borderColor: isSelected ? 'blue' : 'transparent',
-            padding: isSelected ? 5 : 0
-    };
-  });
-
-  console.log('Rendering TextElement with font:', fontFamily);
+  // Skip rendering if font is not loaded
+  if (!font) {
+    console.log('Font not loaded');
+    return null;
+  }
 
   return (
     <View>
-    <GestureDetector gesture={gesture}>
-      <Animated.View style={[animatedStyle, { position: 'absolute' }]}>
-        <Canvas style={{ flex: 1 }}>
-          <Text
-            font={font}
-            text={element.content}
-            x={0}
-            y={element.size}
-            color={element.color || "black"}
-          />
-        </Canvas>
-      </Animated.View>
-    </GestureDetector>
-    {isSelected && (
+      <GestureDetector gesture={gesture}>
+        <Animated.View 
+          style={[
+            animatedStyle, 
+            { 
+              position: 'absolute'
+            }
+          ]}
+        >
+          <Canvas style={{ flex: 1 }}>
+            <Text
+              font={font}  // Use dynamically loaded font
+              text={element.content}
+              x={0}
+              y={element.size}
+              color={textColor}  // Use local state for color
+            />
+            {renderUnderline(
+              element.size * element.content.length / 1.6, 
+              element.size
+            )}
+          </Canvas>
+        </Animated.View>
+      </GestureDetector>
+      {isSelected && (
         <TextFormatterWidget 
-          selectedElement={element}
+          selectedElement={{
+            ...element,
+            ...fontDetails
+          }}
           onUpdateTextStyle={handleTextStyleUpdate}
         />
       )}
@@ -158,4 +307,4 @@ const TextElement = ({
   );
 };
 
-export default TextElement; 
+export default TextElement;

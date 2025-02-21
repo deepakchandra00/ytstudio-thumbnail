@@ -1,17 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   View, 
   StyleSheet, 
-  ScrollView 
+  ScrollView,
+  Modal,
+  TouchableOpacity 
 } from 'react-native';
 import { 
   Text, 
   IconButton, 
   Button,
   Menu,
-  Modal,
   Portal,
-  TextInput
+  TextInput,
+  ActivityIndicator
 } from 'react-native-paper';
 import WheelColorPicker from 'react-native-wheel-color-picker';
 
@@ -21,7 +23,7 @@ import {
   normalizeColor 
 } from '../../utils/colorUtils';
 import { 
-  FONT_MAP,
+  GoogleFontsManager,
   getFontVariant 
 } from '../../utils/fontUtils';
 
@@ -40,11 +42,6 @@ const Colors = {
     light: COLOR_PALETTE.text.light
   }
 };
-
-// Use font variants from fontUtils
-const FONT_FAMILIES = Object.keys(FONT_MAP)
-  .filter(font => font.includes('_400Regular'))
-  .map(font => font.replace('_400Regular', ''));
 
 // Text styling effects
 const TEXT_EFFECTS = [
@@ -84,13 +81,28 @@ const TextFormatterWidget = ({
   });
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [editableText, setEditableText] = useState(selectedElement.content || '');
+  const [availableFonts, setAvailableFonts] = useState([]);
+  const [fontLoading, setFontLoading] = useState(false);
+
+  // Fetch available fonts on component mount
+  useEffect(() => {
+    const loadFonts = async () => {
+      const fonts = await GoogleFontsManager.getAvailableFonts();
+      setAvailableFonts(fonts);
+    };
+    loadFonts();
+  }, []);
 
   // Update text style and notify parent
   const handleStyleChange = (newStyleProps) => {
-    console.log('handleStyleChange called with:', newStyleProps);
-    console.log('Current selectedElement:', selectedElement);
+    console.group('handleStyleChange Debug');
+    console.log('New Style Props:', newStyleProps);
+    console.log('Current Text Style:', textStyle);
+    console.log('Selected Element:', selectedElement);
     
     const updatedStyle = { ...textStyle, ...newStyleProps };
+    console.log('Updated Style:', updatedStyle);
+    
     setTextStyle(updatedStyle);
     
     // Ensure we're using the correct element ID
@@ -98,34 +110,43 @@ const TextFormatterWidget = ({
       console.log('Updating element with ID:', selectedElement.id);
 
       // Determine text decoration based on effects
-      const textDecorationLine = updatedStyle.effects.includes('Underline') ? 'underline' : 
-                                  updatedStyle.effects.includes('Strikethrough') ? 'line-through' : 
+      const textDecorationLine = updatedStyle.effects?.includes('Underline') ? 'underline' : 
+                                  updatedStyle.effects?.includes('Strikethrough') ? 'line-through' : 
                                   'none';
 
       const updatePayload = {
-        color: updatedStyle.color, 
-        size: updatedStyle.fontSize,
-        fontName: updatedStyle.fontFamily,
-        fontStyle: updatedStyle.effects.includes('Italic') ? 'italic' : 'normal',
-        fontWeight: updatedStyle.effects.includes('Bold') ? 'bold' : 'normal',
-        textAlign: updatedStyle.textAlign,
+        id: selectedElement.id,  
+        color: updatedStyle.color || selectedElement.color, 
+        size: updatedStyle.fontSize || selectedElement.size,
+        fontName: newStyleProps.fontName || updatedStyle.fontName || selectedElement.fontName,
+        fontFamily: newStyleProps.fontFamily || updatedStyle.fontFamily || selectedElement.fontFamily,
+        fontStyle: updatedStyle.effects?.includes('Italic') ? 'italic' : 'normal',
+        fontWeight: updatedStyle.effects?.includes('Bold') ? 'bold' : 'normal',
+        textAlign: updatedStyle.textAlign || selectedElement.textAlign,
         textDecorationLine: textDecorationLine,
-        effects: updatedStyle.effects, // Keep full effects array
-        content: newStyleProps.content || selectedElement.content // Ensure content is always included
+        effects: updatedStyle.effects || [], 
+        content: newStyleProps.content || selectedElement.content, 
+        position: selectedElement.position  
       };
 
-      console.log('Update payload:', updatePayload);
+      console.log('Update Payload:', updatePayload);
 
-      // Update element in store using the correct ID
-      updateElement(selectedElement.id, updatePayload);
+      try {
+        // Update element in store using the correct ID
+        updateElement(selectedElement.id, updatePayload);
 
-      // Call parent update method with specific properties
-      if (onUpdateTextStyle) {
-        onUpdateTextStyle(selectedElement.id, updatePayload);
+        // Call parent update method with specific properties
+        if (onUpdateTextStyle) {
+          onUpdateTextStyle(selectedElement.id, updatePayload);
+        }
+      } catch (error) {
+        console.error('Error updating element:', error);
       }
     } else {
       console.error('No selected element or missing ID');
     }
+    
+    console.groupEnd();
   };
 
   // Toggle text styling effects (bold, italic, etc.)
@@ -143,17 +164,30 @@ const TextFormatterWidget = ({
     handleStyleChange({ textAlign: alignment });
   };
 
-  // Change font family
-  const handleFontChange = (fontName) => {
-    const newFontVariant = getFontVariant(
-      fontName, 
-      textStyle.fontStyle || 'normal', 
-      textStyle.fontWeight || 400
-    );
-    handleStyleChange({ 
-      fontFamily: newFontVariant,
-      fontName: fontName 
-    });
+  // Enhanced font change handler with dynamic loading
+  const handleFontChange = async (fontName) => {
+    try {
+      setFontLoading(true);
+      const loadedFont = await GoogleFontsManager.loadGoogleFont(fontName);
+      
+      if (loadedFont) {
+        const newFontVariant = getFontVariant(
+          fontName, 
+          textStyle.fontStyle || 'normal', 
+          textStyle.fontWeight || 400
+        );
+        
+        handleStyleChange({ 
+          fontFamily: newFontVariant,
+          fontName: fontName 
+        });
+      }
+    } catch (error) {
+      console.error('Error loading font:', error);
+    } finally {
+      setFontLoading(false);
+      setFontMenuVisible(false);
+    }
   };
 
   // Toggle color picker visibility
@@ -191,6 +225,39 @@ const TextFormatterWidget = ({
     handleStyleChange({ content: editableText });
     setIsEditModalVisible(false);
   };
+
+  // Add Google Fonts Modal
+  const renderGoogleFontsModal = () => (
+    <Modal 
+      visible={isFontMenuVisible} 
+      animationType="slide" 
+      transparent={true}
+    >
+      <View style={styles.modalOverlay}>
+        <View style={styles.modalContent}>
+          {fontLoading ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator animating={true} />
+              <Text>Loading Font...</Text>
+            </View>
+          ) : (
+            <ScrollView>
+              {availableFonts.map((fontName) => (
+                <TouchableOpacity
+                  key={fontName}
+                  style={styles.fontMenuItem}
+                  onPress={() => handleFontChange(fontName)}
+                >
+                  <Text style={{ fontFamily: fontName }}>{fontName}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          )}
+          <Button onPress={() => setFontMenuVisible(false)}>Close</Button>
+        </View>
+      </View>
+    </Modal>
+  );
 
   return (
     <View style={styles.container}>
@@ -247,37 +314,11 @@ const TextFormatterWidget = ({
             ))}
           </View>
 
-          {/* Font Family Selection with Menu */}
-          <View style={styles.sectionContainer}>
-            <Menu
-              visible={isFontMenuVisible}
-              onDismiss={() => setFontMenuVisible(false)}
-              anchor={
-                <Button 
-                  onPress={() => setFontMenuVisible(true)}
-                  style={styles.fontMenuButton}
-                >
-                  {textStyle.fontFamily.replace('_400Regular', '')}
-                </Button>
-              }
-            >
-              {FONT_FAMILIES.map((font) => (
-                <Menu.Item
-                  key={font}
-                  onPress={() => {
-                    handleFontChange(font);
-                    setFontMenuVisible(false);
-                  }}
-                  title={font}
-                  style={
-                    textStyle.fontFamily.startsWith(font) 
-                      ? styles.selectedFontMenuItem 
-                      : {}
-                  }
-                />
-              ))}
-            </Menu>
-          </View>
+          {/* Font Family Selection */}
+          <IconButton 
+            icon="format-font" 
+            onPress={() => setFontMenuVisible(true)}
+          />
 
           {/* Color and Size */}
           <View style={styles.sectionContainer}>
@@ -349,6 +390,8 @@ const TextFormatterWidget = ({
           </Button>
         </Modal>
       </Portal>
+
+      {renderGoogleFontsModal()}
     </View>
   );
 };
@@ -383,14 +426,6 @@ const styles = StyleSheet.create({
   },
   activeIconButton: {
     backgroundColor: 'rgba(102, 0, 238, 0.1)',
-  },
-  fontMenuButton: {
-    backgroundColor: Colors.background,
-    borderWidth: 1,
-    borderColor: Colors.grey500,
-  },
-  selectedFontMenuItem: {
-    backgroundColor: Colors.accent,
   },
   colorButton: {
     margin: 2,
@@ -436,7 +471,29 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     marginTop: 10
-  }
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 8,
+    width: '80%',
+    maxHeight: '70%',
+  },
+  fontMenuItem: {
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
+  },
+  loadingContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
 });
-
 export default TextFormatterWidget;
