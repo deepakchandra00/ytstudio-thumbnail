@@ -120,6 +120,7 @@ const EditorHeader = ({
   onRemoveElement,
   onAdminSave,
   showAdminSave,
+  onSetBackground
 }) => {
   const navigation = useNavigation();
   const { history, setElements } = useEditorStore();
@@ -227,6 +228,7 @@ const EditorHeader = ({
         show={showImagePickerModal} 
         handleClose={handleCloseImagePickerModal} 
         onPickBackground={onPickBackground}
+        onSetBackground={onSetBackground}
       />
     </Surface>
   );

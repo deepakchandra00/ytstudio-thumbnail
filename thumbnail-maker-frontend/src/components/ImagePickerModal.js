@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Dialog, Portal, Button} from 'react-native-paper';
+import { Dialog, Portal, Button, IconButton } from 'react-native-paper';
 import {
     View,
     StyleSheet,
@@ -11,9 +11,9 @@ import axios from 'axios';
 
 const API_BASE_URL = 'http://192.168.29.102:5000/api/stickers';
 const AWS_BASE_URL = 'https://youtube-thumbnail.s3.us-east-1.amazonaws.com/';
-const folderNames = ['background', 'game', 'upload'];
+const folderNames = ['import', 'background', 'game'];
 
-const ImagePickerModal = ({ show, handleClose, onPickBackground }) => {
+const ImagePickerModal = ({ show, handleClose, onPickBackground, onSetBackground }) => {
     const [activeTab, setActiveTab] = useState(folderNames[0]); // Default to the first folder
     const [backgroundImages, setBackgroundImages] = useState([]);
 
@@ -50,14 +50,23 @@ const ImagePickerModal = ({ show, handleClose, onPickBackground }) => {
                                 </TouchableOpacity>
                             ))}
                         </View>
-                        {activeTab === 'upload' && ( // Render upload input if 'upload' tab is active
-                            <TouchableOpacity onPress={() => handleImageUpload('image_path_here')}>
-                                <Text>Upload Image</Text>
-                            </TouchableOpacity>
+                        {activeTab === 'import' && (
+                            <View style={styles.uploadContainer}>
+                                <IconButton
+                                    icon="camera"
+                                    size={30}
+                                    onPress={() => handleImageUpload('camera_image_path_here')}
+                                />
+                                <IconButton
+                                    icon="image"
+                                    size={30}
+                                    onPress={onPickBackground}
+                                />
+                            </View>
                         )}
                         <View style={styles.imageContainer}>
                             {backgroundImages.map((img, index) => (
-                                <TouchableOpacity key={index} onPress={() => onPickBackground(AWS_BASE_URL + img)}>
+                                <TouchableOpacity key={index} onPress={() => onSetBackground(AWS_BASE_URL + img)}>
                                     <Image source={{ uri: AWS_BASE_URL + img }} style={styles.image} />
                                 </TouchableOpacity>
                             ))}
@@ -98,6 +107,11 @@ const styles = StyleSheet.create({
         width: 100,
         height: 100,
         margin: 5,
+    },
+    uploadContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        marginVertical: 10,
     },
 });
 

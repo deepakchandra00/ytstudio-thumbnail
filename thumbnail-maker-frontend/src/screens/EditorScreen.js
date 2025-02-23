@@ -471,12 +471,27 @@ console.log('Selected Image Element:', selectedImageElement);
     return imageElements.length > 0;
   }, [elements]);
 
+  const onSetBackground = (image) => {
+    setBackgroundImage(image); // Set the selected image as the background
+    console.log('Background image set to:', image);
+
+     // Update backgroundImageObj with the full image details
+     setBackgroundImageObj({
+      uri: image,
+      width: image.width,
+      height: image.height,
+      originalWidth: image.width,
+      originalHeight: image.height
+    });
+  };
+
   return (
     <TouchableWithoutFeedback onPress={handleDeselectElement}>
       <View style={styles.container}>
         <EditorHeader
           onBack={() => {/* TODO */}}
           onPickBackground={pickBackgroundImage}
+          onSetBackground={onSetBackground}
           elements={elements}
           onRemoveElement={removeElement}
           headerMenuVisible={headerMenuVisible}
