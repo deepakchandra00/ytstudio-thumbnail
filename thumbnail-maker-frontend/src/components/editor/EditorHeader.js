@@ -4,6 +4,7 @@ import { Surface, IconButton, Text as PaperText } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import { useEditorStore, useTemplateStore } from '../../store';
 import DraggableFlatList from 'react-native-draggable-flatlist';
+import ImagePickerModal from '../ImagePickerModal';
 
 const LayerReorderModal = ({ 
   visible, 
@@ -124,6 +125,7 @@ const EditorHeader = ({
   const { history, setElements } = useEditorStore();
   const { loading } = useTemplateStore();
   const [layerModalVisible, setLayerModalVisible] = useState(false);
+  const [showImagePickerModal, setShowImagePickerModal] = useState(false);
 
   const handleBack = () => {
     if (history.length > 0) {
@@ -166,6 +168,9 @@ const EditorHeader = ({
     }
   };
 
+  const handleOpenImagePickerModal = () => setShowImagePickerModal(true);
+  const handleCloseImagePickerModal = () => setShowImagePickerModal(false);
+
   return (
     <Surface style={styles.header}>
       <View style={styles.headerLeft}>
@@ -201,6 +206,11 @@ const EditorHeader = ({
             accessibilityLabel={loading ? "Saving..." : "Save Design"}
           />
         )}
+        <IconButton
+          icon="image"
+          mode="contained"
+          onPress={handleOpenImagePickerModal}
+        />
       </View>
 
       <LayerReorderModal
@@ -212,6 +222,11 @@ const EditorHeader = ({
         elements={elements}
         onReorderElements={handleReorderElements}
         onRemoveElement={onRemoveElement}
+      />
+      <ImagePickerModal 
+        show={showImagePickerModal} 
+        handleClose={handleCloseImagePickerModal} 
+        onPickBackground={onPickBackground}
       />
     </Surface>
   );
