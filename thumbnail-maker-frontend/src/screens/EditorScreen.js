@@ -560,6 +560,8 @@ console.log('Selected Image Element:', selectedImageElement);
                     onRotate={(newRotation) => handleRotateElement(element.id, newRotation)}
                     isDragging={isDragging}
                     setIsDragging={setIsDragging}
+                    onDelete={removeElement}
+                    index={index}
                   />
                 );
               }
