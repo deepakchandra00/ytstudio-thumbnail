@@ -12,12 +12,14 @@ import {
   SafeAreaView,
   Modal,
   ScrollView,
+  Image,
 } from 'react-native';
 import { IconButton, Surface, Title, } from 'react-native-paper';
 import getEnvVars from '../../config/constants';
-import ImageElement from './ImageElement';
 
-const STICKER_BASE_URL = 'https://youtube-thumbnail.s3.us-east-1.amazonaws.com/';
+const STICKER_BASE_URL = 'https://d27ilrqyrhzjlu.cloudfront.net/fit-in/100x100/';
+const STICKER_BASE_URL_BIG = 'https://d27ilrqyrhzjlu.cloudfront.net/fit-in/';
+
 const folderNames = ['Frames', 'element', 'female-model', 'festival', 'other'];
 
 const useDebounce = (value, delay) => {
@@ -42,17 +44,7 @@ const StickerItem = React.memo(({ sticker, onPress }) => {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <ImageElement
-        element={{
-          type: 'image',
-          uri: `${STICKER_BASE_URL}${sticker}`,
-          position: { x: 0, y: 0 },
-          width: Dimensions.get('window').width / 6 - 32,
-          height: Dimensions.get('window').width / 6 - 32,
-        }}
-        isPreview={true}
-        containerStyle={styles.stickerImage}
-      />
+      <Image source={{ uri: STICKER_BASE_URL + sticker }} width={Dimensions.get('window').width / 6 - 32} height={Dimensions.get('window').width / 6 - 32} />
     </TouchableOpacity>
   );
 });
@@ -79,8 +71,7 @@ const StickerPicker = ({ visible, onClose, onSelectSticker }) => {
       setLoading(true);
       setError(null);
 
-      const stickerUrl = `${apiUrl}/stickers?folder=element/${activeTab}&limit=30${continuationToken ? `&continuationToken=${continuationToken}` : ''}`;
-      console.log('Fetching from:', stickerUrl);
+      const stickerUrl = `${apiUrl}/stickers?folder=elements/${activeTab}&limit=20${continuationToken ? `&continuationToken=${continuationToken}` : ''}`;
 
       const response = await fetch(stickerUrl);
       if (!response.ok) {
@@ -91,7 +82,6 @@ const StickerPicker = ({ visible, onClose, onSelectSticker }) => {
       if (!Array.isArray(stickerList)) {
         throw new Error('Invalid data format received');
       }
-console.log(stickerList, 'responsewa');
       const stickerKeys = stickerList.map(item => item.Key);
       setStickers(stickerKeys);
       setContinuationToken(stickerList.continuationToken); // Assuming the API returns a continuation token
@@ -179,7 +169,7 @@ console.log(stickerList, 'responsewa');
                     onPress={() => {
                       const stickerElement = { 
                         type: 'image',
-                        uri: `${STICKER_BASE_URL}${sticker}`,
+                        uri: `${STICKER_BASE_URL_BIG}${sticker}`,
                         position: {
                           x: Dimensions.get('window').width / 2 - 75,
                           y: Dimensions.get('window').height / 2 - 75,
@@ -274,6 +264,7 @@ const styles = StyleSheet.create({
   tabText: {
     fontSize: 16,
     color: '#333',
+    textTransform:'capitalize'
   },
   searchContainer: {
     flexDirection: 'row',
