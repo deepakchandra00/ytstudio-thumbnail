@@ -71,6 +71,39 @@ const ImageElement = ({
       if (setIsDragging) runOnJS(setIsDragging)(false);
     })
     .shouldCancelWhenOutside(true);
+//buttonrotation gesture
+// const buttonRotationGesture = Gesture.Pan()
+//   .onBegin(() => {
+//     console.log('Rotation Gesture Begin');
+//   })
+//   .onUpdate((event) => {
+//     const angle = Math.atan2(event.translationY, event.translationX) * (180 / Math.PI);
+//     const snappedAngle = Math.round(angle / 45) * 45; // Snap to 45-degree increments
+//     rotation.value = snappedAngle;
+//   })
+//   .onEnd(() => {
+//     if (onRotate) runOnJS(onRotate)({ rotation: rotation.value });
+//     console.log('Rotation Gesture End');
+//   });
+const rotations = useSharedValue(element.rotation || 0);
+const previousRotation = useSharedValue(0);
+
+const buttonRotationGesture = Gesture.Rotation()
+    .onBegin(() => {
+      previousRotation.value = rotations.value;
+      console.log('Rotation Gesture Begin');
+    })
+    .onUpdate((event) => {
+      const newRotation = previousRotation.value + event.rotation * (180 / Math.PI);
+      const snappedAngle = Math.round(newRotation / 45) * 45; // Snap to 45-degree increments
+      rotations.value = rotations.value + (snappedAngle - rotations.value) * 0.2; // Smooth transition
+      console.log('Smooth Snapped Rotation:', rotations.value);
+    })
+    .onEnd(() => {
+      if (onRotate) runOnJS(onRotate)({ rotation: rotations.value });
+      console.log('Rotation Gesture End');
+    });
+
 
   const gesture = Gesture.Simultaneous(panGesture, rotationGesture);
 
@@ -144,28 +177,26 @@ const ImageElement = ({
                 <Icon source="arrow-expand" color="blue" size={24} />
               </TouchableOpacity>
             </GestureDetector>
-            <TouchableOpacity
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              style={{
-                position: 'absolute',
-                top: -20,
-                left: -20,
-                backgroundColor: 'white',
-                borderRadius: 20,
-                padding: 5,
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.25,
-                shadowRadius: 3.84,
-                elevation: 5,
-              }}
-              onPress={() => {
-                rotation.value += 15;
-                runOnJS(onRotate)({ rotation: rotation.value });
-              }}
-            >
-              <Icon source="rotate-right" color="blue" size={24} />
-            </TouchableOpacity>
+            <GestureDetector gesture={buttonRotationGesture}>
+              <TouchableOpacity
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                style={{
+                  position: 'absolute',
+                  top: -20,
+                  left: -20,
+                  backgroundColor: 'white',
+                  borderRadius: 20,
+                  padding: 5,
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.25,
+                  shadowRadius: 3.84,
+                  elevation: 5,
+                }}
+              >
+                <Icon source="rotate-right" color="blue" size={24} />
+              </TouchableOpacity>
+            </GestureDetector>
             <IconButton
               icon="trash-can"
               mode="contained"

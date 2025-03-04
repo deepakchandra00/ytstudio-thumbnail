@@ -10,8 +10,9 @@ import {
 import axios from 'axios';
 
 const API_BASE_URL = 'http://192.168.29.102:5000/api/stickers';
-const AWS_BASE_URL = 'https://youtube-thumbnail.s3.us-east-1.amazonaws.com/';
-const folderNames = ['import', 'background', 'game'];
+const AWS_BASE_URL = 'https://d27ilrqyrhzjlu.cloudfront.net/fit-in/200x200/';
+const AWS_BASE_URL_BIG = 'https://d27ilrqyrhzjlu.cloudfront.net/fit-in/';
+const folderNames = ['import', 'general', 'game'];
 
 const ImagePickerModal = ({ show, handleClose, onPickBackground, onSetBackground }) => {
     const [activeTab, setActiveTab] = useState(folderNames[0]); // Default to the first folder
@@ -46,7 +47,9 @@ const ImagePickerModal = ({ show, handleClose, onPickBackground, onSetBackground
                         <View style={styles.tabContainer}>
                             {folderNames.map((folder) => (
                                 <TouchableOpacity key={folder} onPress={() => setActiveTab(folder)} style={styles.tabButton}>
-                                    <Text style={activeTab === folder ? styles.activeTab : styles.inactiveTab}>{folder}</Text>
+                                    <Text style={[activeTab === folder ? styles.activeTab : styles.inactiveTab, styles.capitalizeText]}>
+                                        {folder}
+                                    </Text>
                                 </TouchableOpacity>
                             ))}
                         </View>
@@ -66,7 +69,7 @@ const ImagePickerModal = ({ show, handleClose, onPickBackground, onSetBackground
                         )}
                         <View style={styles.imageContainer}>
                             {backgroundImages.map((img, index) => (
-                                <TouchableOpacity key={index} onPress={() => onSetBackground(AWS_BASE_URL + img)}>
+                                <TouchableOpacity key={index} onPress={() => onSetBackground(AWS_BASE_URL_BIG + img)}>
                                     <Image source={{ uri: AWS_BASE_URL + img }} style={styles.image} />
                                 </TouchableOpacity>
                             ))}
@@ -83,12 +86,37 @@ const ImagePickerModal = ({ show, handleClose, onPickBackground, onSetBackground
 
 const styles = StyleSheet.create({
     modalContainer: {
-        backgroundColor: 'white',
-        margin: 20,
+        height: '80%', // Limit modal height
+        maxHeight: 600,
+        width: '95%',
+        alignSelf: 'center',
+        borderRadius: 15,
+    },
+    modalHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingHorizontal: 15,
+        paddingTop: 10,
+    },
+    modalTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+    },
+    closeButton: {
+        margin: 0,
+    },
+    dialogContent: {
+        flex: 1,
+        paddingHorizontal: 0,
+        paddingVertical: 0,
     },
     tabContainer: {
         flexDirection: 'row',
-        marginBottom: 10,
+        justifyContent: 'center',
+        paddingVertical: 10,
+        borderBottomWidth: 1,
+        borderBottomColor: '#e0e0e0',
     },
     tabButton: {
         marginRight: 20,
@@ -102,16 +130,20 @@ const styles = StyleSheet.create({
     imageContainer: {
         flexDirection: 'row',
         flexWrap: 'wrap',
+        justifyContent: 'space-between',
     },
     image: {
-        width: 100,
-        height: 100,
+        width: 70,
+        height: 70,
         margin: 5,
     },
     uploadContainer: {
         flexDirection: 'row',
         justifyContent: 'space-around',
         marginVertical: 10,
+    },
+    capitalizeText: {
+        textTransform: 'capitalize',
     },
 });
 

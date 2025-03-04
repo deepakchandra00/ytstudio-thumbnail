@@ -18,6 +18,7 @@ const EditorToolbar = ({
   const [stickerPickerVisible, setStickerPickerVisible] = useState(false);
 
   const handleStickerSelect = (stickerElement) => {
+    console.log(stickerElement, "stickerElement")
     onAddSticker(stickerElement);
   };
 console.log('processing:', removeBackground)
