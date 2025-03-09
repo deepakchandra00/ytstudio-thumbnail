@@ -2,8 +2,8 @@ import Constants from 'expo-constants';
 
 const ENV = {
   dev: {
-    apiUrl: 'http://192.168.29.102:5000/api',
-    authApiUrl: 'http://192.168.29.102:5000/api/auth',
+    apiUrl: 'http://192.168.29.40:5001/api',
+    authApiUrl: 'http://192.168.29.40:5001/api/auth',
     PIXIAN_API_KEY: 'your_api_key_here',
     cloudinary: {
       cloudName: 'your_cloud_name',
@@ -29,6 +29,6 @@ const getEnvVars = () => {
   return ENV.prod;
 };
 
-export const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+export const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api';
 
 export default getEnvVars;
