@@ -19,8 +19,7 @@ console.log('AWS Config:', {
   secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY ? 'PRESENT' : 'MISSING'
 });
 router.get('/', async (req, res) => {
-  const { folder, limit } = req.query; // Get the folder from query parameters
-  // const limit = 10;
+  const { folder, limit = 10, token } = req.query;
   const allStickers = [];
 
   try {
@@ -31,16 +30,24 @@ router.get('/', async (req, res) => {
     const params = {
       Bucket: process.env.AWS_BUCKET_NAME || 'youtubetests',
       Prefix: `${folder}/`,
-      MaxKeys: `${limit}`
+      MaxKeys: parseInt(limit, 10),
+      ContinuationToken: token || undefined, // Handle pagination
     };
 
     const data = await s3.listObjectsV2(params).promise();
-    console.log(data);
-    allStickers.push(...data.Contents);
 
-    res.send(allStickers);
+    const imageUrls = data.Contents.map((item) => ({
+      key: item.Key,
+      url: `https://${process.env.AWS_BUCKET_NAME}.s3.amazonaws.com/${item.Key}`,
+    }));
+
+    res.send({
+      images: imageUrls,
+      nextToken: data.NextContinuationToken || null, // Return next token
+      isTruncated: data.IsTruncated, // Indicate if more data is available
+    });
   } catch (error) {
-    return res.status(error.statusCode).send(error);
+    return res.status(error.statusCode || 500).send(error);
   }
 });
 

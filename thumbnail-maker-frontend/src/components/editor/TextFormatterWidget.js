@@ -374,20 +374,38 @@ const TextFormatterWidget = ({
           onDismiss={() => setIsEditModalVisible(false)}
           contentContainerStyle={styles.modalContainer}
         >
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Edit Text</Text>
+            <IconButton
+              icon="close"
+              size={24}
+              onPress={() => setIsEditModalVisible(false)}
+            />
+          </View>
           <TextInput
-            label="Edit Text"
             value={editableText}
             onChangeText={setEditableText}
             multiline
             style={styles.editTextInput}
+            placeholder="Enter your text here..."
+            autoFocus={true}
           />
-          <Button 
-            mode="contained" 
-            onPress={saveEditedText}
-            style={styles.saveButton}
-          >
-            Save
-          </Button>
+          <View style={styles.modalFooter}>
+            <Button 
+              mode="outlined" 
+              onPress={() => setIsEditModalVisible(false)}
+              style={styles.modalButton}
+            >
+              Cancel
+            </Button>
+            <Button 
+              mode="contained" 
+              onPress={saveEditedText}
+              style={styles.modalButton}
+            >
+              Save Changes
+            </Button>
+          </View>
         </Modal>
       </Portal>
 
@@ -460,17 +478,56 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   modalContainer: {
-    backgroundColor: 'white', 
-    padding: 20, 
-    margin: 20, 
-    borderRadius: 10
+    backgroundColor: Colors.surface,
+    padding: 24,
+    margin: 20,
+    borderRadius: 12,
+    width: '90%',
+    maxWidth: 500,
+    alignSelf: 'center',
+    position: 'fixed',
+    top: '100px',
+    left: '50%',
+    marginTop: '100px',
+    transform: [
+      { translateX: -250 },
+      { translateY: -200 }
+    ],
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    height: 200,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+    marginTop: 50,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: Colors.text.dark,
   },
   editTextInput: {
-    marginBottom: 15,
-    minHeight: 100
+    backgroundColor: 'rgba(0, 0, 0, 0.03)',
+    borderRadius: 8,
+    padding: 12,
+    minHeight: 120,
+    fontSize: 16,
+    textAlignVertical: 'top',
+    marginBottom: 20,
   },
-  saveButton: {
-    marginTop: 10
+  modalFooter: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 12,
+  },
+  modalButton: {
+    minWidth: 120,
   },
   modalOverlay: {
     flex: 1,
@@ -483,7 +540,7 @@ const styles = StyleSheet.create({
     padding: 20,
     borderRadius: 8,
     width: '80%',
-    maxHeight: '70%',
+    maxHeight: '100',
   },
   fontMenuItem: {
     padding: 10,

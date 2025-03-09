@@ -120,7 +120,9 @@ const EditorHeader = ({
   onRemoveElement,
   onAdminSave,
   showAdminSave,
-  onSetBackground
+  onSetBackground,
+  onExport,
+  onAddShape
 }) => {
   const navigation = useNavigation();
   const { history, setElements } = useEditorStore();
@@ -180,14 +182,14 @@ const EditorHeader = ({
           mode="contained"
           onPress={handleBack}
         />
-        <IconButton
-          icon="image-area"
-          mode="contained"
-          onPress={onPickBackground}
-        />
       </View>
       
       <View style={styles.headerRight}>
+        <IconButton
+          icon="shape"
+          mode="contained"
+          onPress={onAddShape}
+        />
         <IconButton
           icon="layers"
           mode="contained"
@@ -211,6 +213,12 @@ const EditorHeader = ({
           icon="image"
           mode="contained"
           onPress={handleOpenImagePickerModal}
+        />
+        <IconButton
+          icon="export"
+          mode="contained"
+          onPress={onExport}
+          accessibilityLabel="Export Canvas"
         />
       </View>
 

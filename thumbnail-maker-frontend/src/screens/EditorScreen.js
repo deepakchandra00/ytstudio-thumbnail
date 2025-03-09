@@ -1,7 +1,9 @@
 import React, { useState, useCallback, useRef, useMemo, useEffect } from 'react';
-import { View, StyleSheet, Dimensions, Platform, TouchableWithoutFeedback, Alert } from 'react-native';
+import { View, StyleSheet, Dimensions, Platform, TouchableWithoutFeedback, Alert, ScrollView } from 'react-native';
 import { IconButton, Surface, Portal, Modal, TextInput, Button, Menu } from 'react-native-paper';
 import * as ImagePicker from 'expo-image-picker/src/ImagePicker';
+import * as MediaLibrary from 'expo-media-library';
+import { captureRef } from 'react-native-view-shot';
 import {
   Canvas,
   Image,
@@ -22,8 +24,10 @@ import { useRoute } from '@react-navigation/native';
 
 import TextElement from '../components/editor/TextElement';
 import ImageElement from '../components/editor/ImageElement';
+import ShapeElement from '../components/editor/ShapeElement';
 import EditorToolbar from '../components/editor/EditorToolbar';
 import TextModal from '../components/editor/TextModal';
+import ShapeModal from '../components/editor/ShapeModal';
 import EditorHeader from '../components/editor/EditorHeader';
 import { CANVAS_WIDTH, CANVAS_HEIGHT, CANVAS_PADDING } from '../constants/editorConstants';
 import { removeBackground } from '../services/backgroundRemovalService';
@@ -62,7 +66,7 @@ const EditorScreen = () => {
   const { template } = route.params || {};
 
   // Refs
-  const canvasRef = useRef(null);
+  const canvasContainerRef = useRef(null);  // Add this new ref for the canvas container
 
   // Store
   const { elements, addElement, updateElement, removeElement, history, undo, redo, setElements } = useEditorStore();
@@ -207,7 +211,8 @@ const EditorScreen = () => {
   const [selectedElementId, setSelectedElementId] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const [processing, setProcessing] = useState(false);
- 
+  const [shapeModalVisible, setShapeModalVisible] = useState(false);
+  
   // Animated values
   const scale = useSharedValue(1);
   const rotation = useSharedValue(0);
@@ -319,7 +324,7 @@ const EditorScreen = () => {
   const handleElementSelect = useCallback((elementId) => {
     console.log('Selecting element:', elementId);
     setSelectedElementId(elementId);
-  }, []);
+  }, [elements]);
 
   const handleUpdateTextStyle = (elementId, newStyle) => {
     // Update the specific text element's style
@@ -330,7 +335,6 @@ const EditorScreen = () => {
   };
 
   const handleDeselectElement = useCallback(() => {
-    // Only deselect if not currently dragging
     if (!isDragging) {
       setSelectedElementId(null);
     }
@@ -398,7 +402,6 @@ const EditorScreen = () => {
   const handleRemoveBackground = async () => {
     // Find image elements
     const selectedImageElement = selectedElementId ? elements.find(el => el.id === selectedElementId && el.type === 'image') : null;
-console.log('Selected Image Element:', selectedImageElement);
     // If no image elements exist
     if (!selectedImageElement) {
       Alert.alert(
@@ -485,6 +488,53 @@ console.log('Selected Image Element:', selectedImageElement);
     });
   };
 
+  const saveCanvasAsImage = async () => {
+    try {
+      if (!canvasContainerRef.current) {
+        throw new Error('Canvas container not found');
+      }
+
+      // Capture the canvas content using the container ref
+      const uri = await captureRef(canvasContainerRef.current, {
+        format: 'png',
+        quality: 1,
+        result: 'tmpfile',
+        height: CANVAS_HEIGHT,
+        width: CANVAS_WIDTH
+      });
+
+      console.log('Captured Image URI:', uri);
+
+      if (Platform.OS === 'ios' || Platform.OS === 'android') {
+        // Request permissions
+        const { status } = await MediaLibrary.requestPermissionsAsync();
+        if (status !== 'granted') {
+          Alert.alert('Permission Denied', 'You need to grant permission to save images.');
+          return;
+        }
+
+        // Save the image to the gallery
+        const asset = await MediaLibrary.createAssetAsync(uri);
+        await MediaLibrary.createAlbumAsync('Canvas Images', asset, false);
+
+        Alert.alert('Success', 'Canvas saved to your gallery!');
+      } else {
+        Alert.alert('Success', `Image saved at: ${uri}`);
+      }
+    } catch (error) {
+      console.error('Error saving image:', error);
+      Alert.alert('Error', 'Failed to save image. Please try again.');
+    }
+  };
+
+  const handleAddShape = (shapeElement) => {
+    addElement({
+      ...shapeElement,
+      id: `shape_${Date.now()}`,
+      zIndex: elements.length
+    });
+  };
+
   return (
     <TouchableWithoutFeedback onPress={handleDeselectElement}>
       <View style={styles.container}>
@@ -499,75 +549,118 @@ console.log('Selected Image Element:', selectedImageElement);
           showAdminSave={true}
           onAdminSave={handleAdminSave}
           resetToDefaultTemplate={resetToDefaultTemplate}
+          onExport={saveCanvasAsImage}
+          onAddShape={() => setShapeModalVisible(true)}
         />
+        
         <View style={styles.canvasContainer}>
-          <View style={styles.canvasWrapper}>
-            <Canvas style={styles.canvas}>
-              <Fill color="white" />
-              {processedBackgroundImage && (
-                <Image
-                  image={processedBackgroundImage}
-                  x={0}
-                  y={0}
-                  width={CANVAS_WIDTH}
-                  height={CANVAS_HEIGHT}
-                  fit="cover"
-                />
-              )}
-            </Canvas>
-
-            {elements.map((element, index) => {
-              console.log('Rendering element:', JSON.stringify(element, null, 2));
-              // Add a unique ID if not already present
-              if (!element.id) {
-                element.id = `element_${index}_${Date.now()}`;
-              }
-
-              if (element.type === 'text') {
-                return (
-                  <TextElement
-                    key={element.id}
-                    element={element}
-                    isSelected={selectedElementId === element.id}
-                    onSelect={() => handleElementSelect(element.id)}
-                    onDrag={(newPosition) => handleElementDrag(element.id, newPosition)}
-                    onRotate={(newRotation) => handleRotateElement(element.id, newRotation)}
-                    isDragging={isDragging}
-                    setIsDragging={setIsDragging}
-                    onUpdateTextStyle={handleUpdateTextStyle}
+          <ScrollView
+            style={styles.canvasScrollView}
+            contentContainerStyle={styles.canvasContentContainer}
+            scrollEnabled={false}
+            showsVerticalScrollIndicator={false}
+            showsHorizontalScrollIndicator={false}
+          >
+            <View 
+              ref={canvasContainerRef}
+              style={[styles.canvasWrapper]} 
+              collapsable={false}
+            >
+              <Canvas style={styles.canvas}>
+                <Fill color="white" />
+                {processedBackgroundImage && (
+                  <Image
+                    image={processedBackgroundImage}
+                    x={0}
+                    y={0}
+                    width={CANVAS_WIDTH}
+                    height={CANVAS_HEIGHT}
+                    fit="cover"
                   />
-                );
-              } else if (element.type === 'image') {
-                return (
-                  <ImageElement
-                    key={element.id}
-                    element={element}
-                    isSelected={selectedElementId === element.id}
-                    onSelect={() => handleElementSelect(element.id)}
-                    onDrag={(newPosition) => {
-                      updateElement(element.id, {
-                        ...element,
-                        position: newPosition
-                      });
-                    }}
-                    onResize={(newDimensions) => {
-                      updateElement(element.id, {
-                        ...element,
-                        width: newDimensions.width,
-                        height: newDimensions.height
-                      });
-                    }}
-                    onRotate={(newRotation) => handleRotateElement(element.id, newRotation)}
-                    isDragging={isDragging}
-                    setIsDragging={setIsDragging}
-                    onDelete={removeElement}
-                    index={index}
-                  />
-                );
-              }
-              return null;
-            })}
-          </View>
+                )}
+              </Canvas>
+
+              {elements.map((element, index) => {
+                console.log('Rendering element:', JSON.stringify(element, null, 2));
+                // Add a unique ID if not already present
+                if (!element.id) {
+                  element.id = `element_${index}_${Date.now()}`;
+                }
+
+                if (element.type === 'text') {
+                  return (
+                    <TextElement
+                      key={element.id}
+                      element={element}
+                      isSelected={selectedElementId === element.id}
+                      onSelect={() => handleElementSelect(element.id)}
+                      onDrag={(newPosition) => handleElementDrag(element.id, newPosition)}
+                      onRotate={(newRotation) => handleRotateElement(element.id, newRotation)}
+                      isDragging={isDragging}
+                      setIsDragging={setIsDragging}
+                      onUpdateTextStyle={handleUpdateTextStyle}
+                    />
+                  );
+                } else if (element.type === 'image') {
+                  return (
+                    <ImageElement
+                      key={element.id}
+                      element={element}
+                      isSelected={selectedElementId === element.id}
+                      onSelect={() => handleElementSelect(element.id)}
+                      onDrag={(newPosition) => {
+                        updateElement(element.id, {
+                          ...element,
+                          position: newPosition
+                        });
+                      }}
+                      onResize={(newDimensions) => {
+                        updateElement(element.id, {
+                          ...element,
+                          width: newDimensions.width,
+                          height: newDimensions.height
+                        });
+                      }}
+                      onRotate={(newRotation) => handleRotateElement(element.id, newRotation)}
+                      isDragging={isDragging}
+                      setIsDragging={setIsDragging}
+                      onDelete={removeElement}
+                      index={index}
+                    />
+                  );
+                } else if (element.type === 'shape') {
+                  return (
+                    <ShapeElement
+                      key={element.id}
+                      element={element}
+                      isSelected={selectedElementId === element.id}
+                      onSelect={() => handleElementSelect(element.id)}
+                      onDrag={(newPosition) => {
+                        updateElement(element.id, {
+                          ...element,
+                          position: newPosition
+                        });
+                      }}
+                      onResize={(newDimensions) => {
+                        updateElement(element.id, {
+                          ...element,
+                          width: newDimensions.width,
+                          height: newDimensions.height
+                        });
+                      }}
+                      onRotate={(newRotation) => handleRotateElement(element.id, newRotation)}
+                      isDragging={isDragging}
+                      setIsDragging={setIsDragging}
+                      onRemoveElement={removeElement}
+                      index={index}
+                      onUpdateElement={updateElement}
+                    />
+                  );
+                }
+                return null;
+              })}
+            </View>
+          </ScrollView>
         </View>
 
         <EditorToolbar
@@ -609,6 +702,12 @@ console.log('Selected Image Element:', selectedImageElement);
           setFontMenuVisible={setFontMenuVisible}
           setColorMenuVisible={setColorMenuVisible}
         />
+
+        <ShapeModal
+          visible={shapeModalVisible}
+          onDismiss={() => setShapeModalVisible(false)}
+          onAddShape={handleAddShape}
+        />
       </View>
     </TouchableWithoutFeedback>
   );
@@ -623,10 +722,21 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  canvasScrollView: {
+    width: CANVAS_WIDTH,
+    height: CANVAS_HEIGHT,
+  },
+  canvasContentContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   canvasWrapper: {
     width: CANVAS_WIDTH,
     height: CANVAS_HEIGHT,
     position: 'relative',
+    backgroundColor: 'white',
+    // overflow: 'hidden',
   },
   canvas: {
     width: CANVAS_WIDTH,
