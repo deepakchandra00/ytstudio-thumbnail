@@ -25,12 +25,16 @@ export default {
         foregroundImage: "./assets/adaptive-icon.png",
         backgroundColor: "#6200ee"
       },
+      "package": "com.deepak.youtubethumbnailmaker",
       newArchEnabled: true
     },
     extra: {
       cloudinaryCloudName: process.env.CLOUDINARY_CLOUD_NAME,
       cloudinaryApiKey: process.env.CLOUDINARY_API_KEY,
       cloudinaryApiSecret: process.env.CLOUDINARY_API_SECRET,
+      "eas": {
+        "projectId": "0344fe21-07ff-4ea6-a490-ff16f1ae62fa"
+      }
     },
     plugins: [
       "expo-image-picker"
