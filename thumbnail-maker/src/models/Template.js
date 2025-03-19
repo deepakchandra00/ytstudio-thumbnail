@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const elementSchema = new mongoose.Schema({
   type: {
     type: String,
-    enum: ['image', 'text'],
+    enum: ['image', 'text', 'shape'],
     required: true
   },
   uri: {
@@ -18,12 +18,37 @@ const elementSchema = new mongoose.Schema({
   // Add width and height for image elements
   width: {
     type: Number,
-    default: function() { return this.type === 'image' ? 100 : undefined; }
+    default: function() { return this.type === 'image' || this.type === 'shape' ? 100 : undefined; }
   },
   height: {
     type: Number,
-    default: function() { return this.type === 'image' ? 100 : undefined; }
+    default: function() { return this.type === 'image' || this.type === 'shape' ? 100 : undefined; }
   },
+  // Shape specific fields
+  shapeType: {
+    type: String,
+    enum: ['rectangle', 'circle', 'triangle'],
+    required: function() { return this.type === 'shape'; }
+  },
+  borderWidth: {
+    type: Number,
+    default: 0
+  },
+  borderColor: {
+    type: String,
+    default: 'transparent'
+  },
+  borderRadius: {
+    type: Number,
+    default: 0
+  },
+  shadow: {
+    dx: Number,
+    dy: Number,
+    blur: Number,
+    color: String
+  },
+  // Common fields
   font: {
     type: String,
     default: 'serif'

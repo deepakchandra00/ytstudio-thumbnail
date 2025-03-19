@@ -74,4 +74,5 @@ process.on('SIGTERM', () => {
   });
 });
 
-module.exports = { app, server, socketService };
+// Export the Express app for Vercel
+module.exports = app;

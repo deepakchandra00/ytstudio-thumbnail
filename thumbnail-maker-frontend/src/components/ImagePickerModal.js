@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import axios from 'axios';
 
-const API_BASE_URL = 'http://192.168.29.40:5001/api/stickers';
+const API_BASE_URL = 'https://thumbnail-maker-one.vercel.app/api/stickers';
 const AWS_BASE_URL = 'https://d27ilrqyrhzjlu.cloudfront.net/fit-in/200x200/';
 const AWS_BASE_URL_BIG = 'https://d27ilrqyrhzjlu.cloudfront.net/fit-in/';
 const folderNames = ['import', 'general', 'game'];

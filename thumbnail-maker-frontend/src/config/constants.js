@@ -2,8 +2,8 @@ import Constants from 'expo-constants';
 
 const ENV = {
   dev: {
-    apiUrl: 'http://192.168.29.40:5001/api',
-    authApiUrl: 'http://192.168.29.40:5001/api/auth',
+    apiUrl: 'https://thumbnail-maker-one.vercel.app/api',
+    authApiUrl: 'https://thumbnail-maker-one.vercel.app/api/auth',
     PIXIAN_API_KEY: 'your_api_key_here',
     cloudinary: {
       cloudName: 'your_cloud_name',
@@ -12,8 +12,8 @@ const ENV = {
     },
   },
   prod: {
-    apiUrl: 'https://your-production-api.com/api',
-    authApiUrl: 'https://your-production-api.com/api/auth',
+    apiUrl: 'https://thumbnail-maker-one.vercel.app/api',
+    authApiUrl: 'https://thumbnail-maker-one.vercel.app/api/auth',
     cloudinary: {
       cloudName: Constants.expoConfig.extra?.cloudinaryCloudName,
       apiKey: Constants.expoConfig.extra?.cloudinaryApiKey,
@@ -29,6 +29,6 @@ const getEnvVars = () => {
   return ENV.prod;
 };
 
-export const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api';
+export const API_URL = process.env.REACT_APP_API_URL || 'https://thumbnail-maker-one.vercel.app/api';
 
 export default getEnvVars;
